@@ -7,9 +7,9 @@ spec:
   - image: nginx
     name: webserver
     volumeMounts:
-    - mountPath: /cache
-      name: cache-volume
+    - mountPath: /scratch
+      name: scratch-volume
   volumes:
-  - name: cache-volume
+  - name: scratch-volume
     emptyDir:
       sizeLimit: 500Mi

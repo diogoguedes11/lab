@@ -1,13 +1,13 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: linkding-claim
-  namespace: linkding
+  name: mealie-data
+  namespace: mealie
 spec:
+  storageClassName: local-path
   accessModes:
     - ReadWriteOnce
-  volumeMode: Filesystem
   resources:
     requests:
-      storage: 1Gi
-  storageClassName: local-path
+      storage: 500Mi
+
