@@ -1,5 +1,7 @@
 # Number of replicas
 replicaCount: 2
+podLabels:
+  hello: world 
 persistence:
   - name: homarr-config
     # -- Enable homarr-config persistent storage
