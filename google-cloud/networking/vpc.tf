@@ -4,7 +4,7 @@ provider "google" {
 }
 
 resource "google_compute_network" "vpc_network" {
-  name                    = "vpc-network"
+  name                    = var.vpc_name 
   auto_create_subnetworks = false
 
 }
@@ -23,4 +23,15 @@ resource "google_compute_firewall" "allow_ssh_fwrule" {
     ports    = ["22"]
   }
   source_ranges = [ google_compute_subnetwork.subnetwork.ip_cidr_range  ]
+}
+
+# Allow SSH from Web Console
+resource "google_compute_firewall" "allow_ssh_ciap_fwrule" {
+  name    = "allow-ssh-ciap-fwrule"
+  network = google_compute_network.vpc_network.name
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+  source_ranges = ["35.235.240.0/20"] 
 }
