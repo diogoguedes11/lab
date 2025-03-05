@@ -9,10 +9,11 @@ resource "google_compute_network" "vpc_network" {
 
 }
 resource "google_compute_subnetwork" "subnetwork" {
-  name          = "${var.region}-subnet"
-  ip_cidr_range = "10.0.0.0/24"
-  region        = var.region
-  network       = google_compute_network.vpc_network.name
+  name                     = "${var.region}-subnet"
+  ip_cidr_range            = "10.0.0.0/24"
+  region                   = var.region
+  network                  = google_compute_network.vpc_network.name
+  private_ip_google_access = true
 }
 
 resource "google_compute_firewall" "allow_ssh_fwrule" {
