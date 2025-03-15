@@ -26,5 +26,11 @@ resource "google_compute_instance" "bastion_host" {
     subnetwork = google_compute_subnetwork.subnetwork[0].name
 
   }
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    sudo apt-get install kubectl
+    sudo apt-get install google-cloud-sdk-gke-gcloud-auth-plugin
+    EOT
+
 }
 
