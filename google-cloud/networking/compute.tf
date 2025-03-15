@@ -1,27 +1,29 @@
-# resource "google_compute_instance" "default" {
-#   name         = "bastion-vm"
-#   machine_type = "e2-micro"
-#   zone         = "${var.region}-a"
+# ---------------------------------------------------------------------------------------------------------------------
+# Compute project metadata
+# ---------------------------------------------------------------------------------------------------------------------
 
-#   boot_disk {
-#     initialize_params {
-#       image = "ubuntu-os-cloud/ubuntu-2004-lts"
-#     }
+resource "google_compute_project_metadata_item" "enable-oslogin" {
+  count = local.create-vm ? 1 : 0
+  key   = "enable-oslogin"
+  value = "TRUE"
+}
 
-#   }
+resource "google_compute_instance" "bastion-1" {
+  count        = local.create-vm ? 1 : 0
+  name         = "${local.env}-compute-instance"
+  machine_type = "e2-micro"
 
-#   network_interface {
-#     network    = google_compute_network.vpc_network.name
-#     subnetwork = google_compute_subnetwork.subnetwork.name
+  boot_disk {
+    initialize_params {
+      image = local.compute-image
+      size  = 10
+      type  = "pd-standard"
+    }
+  }
 
-#     access_config {
-#       // Ephemeral public IP
-#     }
-#   }
+  network_interface {
+    network    = google_compute_network.vpc_network[0].name
+    subnetwork = google_compute_subnetwork.subnetwork[0].name
+  }
+}
 
-#   #   service_account {
-#   #     # Google recommends custom service accounts that have cloud-platform scope and permissions granted via IAM Roles.
-#   #     email  = google_service_account.default.email
-#   #     scopes = ["cloud-platform"]
-#   #   }
-# }

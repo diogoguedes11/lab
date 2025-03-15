@@ -1,27 +1,31 @@
 
 resource "google_compute_global_address" "private_ip_address" {
+  count         = local.create-sql ? 1 : 0
   name          = "private-ip-address"
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"
   prefix_length = 16
-  network       = google_compute_network.vpc_network.id
+  network       = google_compute_network.vpc_network[0].name
 }
 
 resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = google_compute_network.vpc_network.id
+  count                   = local.create-sql ? 1 : 0
+  network                 = google_compute_network.vpc_network[0].id
   service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
+  reserved_peering_ranges = [google_compute_global_address.private_ip_address[0].name]
 }
 
 resource "random_id" "db_name_suffix" {
+  count       = local.create-sql ? 1 : 0
   byte_length = 4
 }
 
 resource "google_sql_database_instance" "this" {
-  name                = "private-instance-${random_id.db_name_suffix.hex}"
-  region              = var.region
+  count               = local.create-sql ? 1 : 0
+  name                = "private-instance-${random_id.db_name_suffix[0].hex}"
+  region              = local.region
   database_version    = "MYSQL_8_0"
-  project             = var.project_id
+  project             = local.project
   deletion_protection = false
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
@@ -30,7 +34,7 @@ resource "google_sql_database_instance" "this" {
     tier = "db-f1-micro"
     ip_configuration {
       ipv4_enabled                                  = false
-      private_network                               = google_compute_network.vpc_network.id
+      private_network                               = google_compute_network.vpc_network[0].id
       enable_private_path_for_google_cloud_services = true
     }
   }
