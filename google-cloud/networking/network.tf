@@ -4,7 +4,7 @@
 
 resource "google_compute_network" "vpc_network" {
   count                   = local.create-network ? 1 : 0
-  name                    = local.project
+  name                    = "${local.env}-vpc-network"
   description             = "VPC network"
   auto_create_subnetworks = false
   routing_mode            = "REGIONAL"

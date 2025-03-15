@@ -2,13 +2,13 @@
 # Compute project metadata
 # ---------------------------------------------------------------------------------------------------------------------
 
-resource "google_compute_project_metadata_item" "enable-oslogin" {
+resource "google_compute_project_metadata_item" "enableos_login" {
   count = local.create-vm ? 1 : 0
   key   = "enable-oslogin"
   value = "TRUE"
 }
 
-resource "google_compute_instance" "bastion-1" {
+resource "google_compute_instance" "this" {
   count        = local.create-vm ? 1 : 0
   name         = "${local.env}-compute-instance"
   machine_type = "e2-micro"

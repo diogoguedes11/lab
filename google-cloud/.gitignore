@@ -4,4 +4,4 @@
 .terraform
 terraform.tfstate.backup
 .terraform.tfstate
-
+.terrafmrom.tfstate.*
