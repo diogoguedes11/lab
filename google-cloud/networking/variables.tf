@@ -6,6 +6,7 @@ variable "env" {
   type = map(object({
     project        = string,
     region         = string,
+    zone           = string,
     create-network = bool,
     network        = string,
     create-sql     = bool
@@ -21,6 +22,7 @@ variable "env" {
 locals {
 
   region  = var.env[terraform.workspace].region
+  zone    = var.env[terraform.workspace].zone
   project = var.env[terraform.workspace].project
   env     = terraform.workspace
 
