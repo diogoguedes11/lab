@@ -18,6 +18,6 @@ resource "google_compute_subnetwork" "subnetwork" {
   name                     = "${local.env}-subnet"
   ip_cidr_range            = "10.0.0.0/24"
   region                   = local.region
-  network                  = google_compute_network.vpc_network[0].name
+  network                  = google_compute_network.vpc_network.0.name
   private_ip_google_access = true
 }

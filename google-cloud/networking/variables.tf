@@ -9,9 +9,10 @@ variable "env" {
     zone           = string,
     create-network = bool,
     network        = string,
-    create-sql     = bool
-    compute-image  = string
-    create-vm      = bool
+    create-sql     = bool,
+    compute-image  = string,
+    create-vm      = bool,
+    create-mig     = bool
   }))
 }
 
@@ -29,8 +30,10 @@ locals {
   # Network
   create-network = var.env[terraform.workspace].create-network
   network        = var.env[terraform.workspace].network
-  compute-image  = var.env[terraform.workspace].compute-image
-  create-vm      = var.env[terraform.workspace].create-vm
+  # Compute
+  compute-image = var.env[terraform.workspace].compute-image
+  create-vm     = var.env[terraform.workspace].create-vm
+  create-mig    = var.env[terraform.workspace].create-mig
   # SQL
   create-sql = var.env[terraform.workspace].create-sql
 }

@@ -23,9 +23,12 @@ resource "google_compute_instance" "this" {
     }
   }
   network_interface {
-    network    = google_compute_network.vpc_network[0].name
-    subnetwork = google_compute_subnetwork.subnetwork[0].name
+    network    = google_compute_network.vpc_network.0.name
+    subnetwork = google_compute_subnetwork.subnetwork.0.name
 
   }
 }
+
+
+# MIG
 

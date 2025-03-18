@@ -7,8 +7,8 @@ resource "google_container_cluster" "gke" {
   location                 = local.region
   initial_node_count       = 1
   remove_default_node_pool = true
-  network                  = google_compute_network.vpc_network[0].name
-  subnetwork               = google_compute_subnetwork.subnetwork[0].name
+  network                  = google_compute_network.vpc_network.0.name
+  subnetwork               = google_compute_subnetwork.subnetwork.0.name
   deletion_protection      = false
   master_authorized_networks_config {
   }
