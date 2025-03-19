@@ -16,7 +16,18 @@ resource "google_container_cluster" "gke" {
     enable_private_endpoint = true
     enable_private_nodes    = true
   }
-
   depends_on = [google_project_service.services]
+}
+
+resource "google_container_node_pool" "node_pool" {
+  name       = "my-pool"
+  cluster    = google_container_cluster.gke.name
+  node_count = 1
+
+  node_config {
+    preemptible  = false
+    machine_type = "e2-medium"
+
+  }
 }
 
