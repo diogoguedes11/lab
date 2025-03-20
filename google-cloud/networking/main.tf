@@ -18,6 +18,7 @@ terraform {
 provider "google" {
   project = local.project
   region  = local.region
+  zone    = local.zone
 }
 resource "google_project_service" "services" {
   for_each = toset([
