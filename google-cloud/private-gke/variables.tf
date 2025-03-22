@@ -12,6 +12,7 @@ variable "env" {
     create-sql     = bool
     compute-image  = string
     create-vm      = bool
+    create-gke     = bool
   }))
 }
 
@@ -33,5 +34,7 @@ locals {
   create-vm      = var.env[terraform.workspace].create-vm
   # SQL
   create-sql = var.env[terraform.workspace].create-sql
+  # GKE
+  create-gke = var.env[terraform.workspace].create-gke
 }
 

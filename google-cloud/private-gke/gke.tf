@@ -3,6 +3,7 @@
 # ---------------------------------
 
 resource "google_container_cluster" "gke" {
+  count                    = local.create-gke ? 1 : 0
   name                     = "${local.env}-gke-cluster"
   location                 = local.region
   initial_node_count       = 1
