@@ -27,5 +27,6 @@ if __name__ == '__main__':
      while True:
           if datetime.datetime.now() >= next_pause:
                sound_notification()
+               print("Time to take a break (5/10 minutes), save your eyes :)")
                break
           time.sleep(1)
