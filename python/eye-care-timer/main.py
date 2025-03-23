@@ -3,22 +3,29 @@ import vlc
 import os
 import time
 def get_current_time():
-     current_time = datetime.datetime.now()
-     return current_time
+     return datetime.datetime.now() 
 
-def one_hour_later(get_current_time):
-     one_hour_later =  get_current_time + datetime.timedelta(hours=1)
-     return one_hour_later
+def one_hour_later(current_time):
+     return current_time + datetime.timedelta(hours=1)
+     
 
 def sound_notification() -> None:
      file_path = "./clock-alarm.mp3"
+     if not os.path.exists(file_path):
+          print(f"File not found: {file_path}")
+          return
      p = vlc.MediaPlayer(f"file://{os.path.abspath(file_path)}")
      p.play()
-     time.sleep(5)
+     time.sleep(5) # wait for the sound to finish
+
 if __name__ == '__main__':
-     print(f"Current time is: {get_current_time()}")
-     print(f"Next pause: {one_hour_later(get_current_time())}")
+     current_time = get_current_time()
+     next_pause = one_hour_later(current_time)
+     print(f"Current time is: {current_time}")
+     print(f"Next pause: {next_pause}")
+    
      while True:
-          if get_current_time() == one_hour_later(get_current_time()):
+          if datetime.datetime.now() >= next_pause:
                sound_notification()
                break
+          time.sleep(1)
