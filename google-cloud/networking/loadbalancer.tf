@@ -27,13 +27,6 @@ resource "google_compute_url_map" "default" {
   name            = "l7-xlb-url-map"
   provider        = google-beta
   default_service = google_compute_backend_service.default.0.id
-}
-resource "google_compute_url_map" "test_urlmap" {
-  count           = local.create-mig ? 1 : 0
-  project         = local.project
-  name            = "test-url-map"
-  provider        = google-beta
-  default_service = google_compute_backend_service.default.0.id
   host_rule {
     hosts        = ["*"]
     path_matcher = "path-matcher"
@@ -42,8 +35,8 @@ resource "google_compute_url_map" "test_urlmap" {
     name            = "path-matcher"
     default_service = google_compute_backend_service.default.0.id
     path_rule {
-      paths   = ["/test/*"]
       service = google_compute_backend_service.default.0.id
+      paths   = ["/test/*"]
     }
   }
 }

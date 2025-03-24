@@ -17,7 +17,7 @@ resource "google_compute_instance_group_manager" "default" {
     name              = "primary"
   }
   base_instance_name = "vm"
-  target_size        = 2
+  target_size        = 1
 }
 
 # backend service with custom request and response headers
@@ -25,6 +25,7 @@ resource "google_compute_backend_service" "default" {
   count                 = local.create-mig ? 1 : 0
   project               = local.project
   name                  = "l7-xlb-backend-service"
+  security_policy       = google_compute_security_policy.this.id
   provider              = google
   protocol              = "HTTP"
   port_name             = "http"
