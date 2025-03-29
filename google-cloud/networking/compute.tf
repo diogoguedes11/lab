@@ -1,4 +1,6 @@
-# ---------------------------------------------------------------------------------------------------------------------
+locals {
+  machines = ["compute1", "compute2"]
+}
 # Compute project metadata
 # ---------------------------------------------------------------------------------------------------------------------
 
@@ -9,8 +11,8 @@ resource "google_compute_project_metadata_item" "enableos_login" {
 }
 
 resource "google_compute_instance" "this" {
-  count        = local.create-vm ? 1 : 0
-  name         = "${local.env}-compute-instance"
+  for_each     = toset(local.machines)
+  name         = each.value
   machine_type = "e2-micro"
   zone         = local.zone
 

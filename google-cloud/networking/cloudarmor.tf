@@ -16,7 +16,7 @@ resource "google_compute_security_policy" "this" {
   }
   rule {
     action   = "deny(403)"
-    priority = "1000"
+    priority = "5000"
     match {
       versioned_expr = "SRC_IPS_V1"
       config {
@@ -24,5 +24,16 @@ resource "google_compute_security_policy" "this" {
       }
     }
     description = "Deny access to IPs in 0.0.0.0/0"
+  }
+  rule {
+    action   = "allow"
+    priority = "1000"
+    match {
+      versioned_expr = "SRC_IPS_V1"
+      config {
+        src_ip_ranges = ["85.240.240.153/32"]
+      }
+    }
+    description = "default rule"
   }
 }
