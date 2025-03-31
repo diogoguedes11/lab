@@ -25,7 +25,7 @@ resource "google_compute_instance" "consumer_instance" {
   name         = "consumer-instance"
   machine_type = "e2-micro"
   zone         = "${local.region}-a"
-  project      = local.project_id_consumer
+  project      = local.project_id_producer
   boot_disk {
     initialize_params {
       image = "debian-cloud/debian-11"
