@@ -16,7 +16,7 @@ resource "google_compute_instance" "bastion_host" {
 
   boot_disk {
     initialize_params {
-      image = local.compute-image
+      image = "debian-cloud/debian-11"
       size  = 10
       type  = "pd-standard"
     }
