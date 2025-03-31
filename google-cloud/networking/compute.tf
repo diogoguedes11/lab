@@ -31,6 +31,3 @@ resource "google_compute_instance" "this" {
   }
 }
 
-
-# MIG
-
