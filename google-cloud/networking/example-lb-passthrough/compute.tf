@@ -7,6 +7,8 @@ resource "google_compute_network" "vpc_network" {
   description             = "VPC network"
   auto_create_subnetworks = false
   routing_mode            = "REGIONAL"
+  project                 = local.project
+
 }
 
 # ---------------------------------------------------------------------------------------------------------------------

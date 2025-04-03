@@ -12,7 +12,7 @@ resource "google_compute_firewall" "allow_ssh_fwrule" {
 resource "google_compute_firewall" "allow_ssh_ciap_fwrule" {
   name    = "allow-ssh-ciap-fwrule"
   network = google_compute_network.vpc_network.name
-  project = local.project
+  project = "gcp-network-452116"
 
   allow {
     protocol = "tcp"

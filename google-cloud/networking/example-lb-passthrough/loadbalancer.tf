@@ -6,7 +6,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   project               = local.project
   backend_service       = google_compute_region_backend_service.default.id
   provider              = google-beta
-  region                = "europe-west1"
+  region                = local.region
   ip_protocol           = "TCP"
   load_balancing_scheme = "INTERNAL"
   all_ports             = true
