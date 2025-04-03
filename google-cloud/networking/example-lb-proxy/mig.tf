@@ -27,11 +27,12 @@ resource "google_compute_region_backend_service" "default" {
   provider              = google-beta
   protocol              = "TCP"
   region                = local.region
-  load_balancing_scheme = "INTERNAL"
-  health_checks         = [google_compute_health_check.default.id]
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  health_checks         = [google_compute_region_health_check.default.id]
   backend {
-    group          = google_compute_instance_group_manager.default.instance_group
-    balancing_mode = "CONNECTION"
+    group                        = google_compute_instance_group_manager.default.instance_group
+    balancing_mode               = "CONNECTION"
+    max_connections_per_instance = 1
   }
 }
 

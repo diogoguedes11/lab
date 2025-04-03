@@ -8,7 +8,7 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   provider              = google-beta
   region                = local.region
   ip_protocol           = "TCP"
-  load_balancing_scheme = "INTERNAL"
+  load_balancing_scheme = "INTERNAL_MANAGED" # Classic Proxy LB
   all_ports             = true
   allow_global_access   = true
   network               = google_compute_network.vpc_network.name
@@ -16,12 +16,15 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
 
 }
 # health check
-resource "google_compute_health_check" "default" {
+resource "google_compute_region_health_check" "default" {
   project  = local.project
   name     = "ilb-hc"
+  region = local.region
   provider = google
   http_health_check {
     port_specification = "USE_NAMED_PORT"
     port_name          = "http"
+
   }
+
 }
