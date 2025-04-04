@@ -35,7 +35,7 @@ resource "google_compute_firewall" "allow_icmp_fwrule" {
 
 
 # allow access from health check ranges
-resource "google_compute_firewall" "default" {
+resource "google_compute_firewall" "allow_lb_health_checks" {
   project       = local.project
   name          = "l7-xlb-fwrule"
   provider      = google
