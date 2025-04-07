@@ -58,15 +58,7 @@ resource "google_compute_instance_template" "default" {
   }
 
   # install nginx and serve a simple web page
-  metadata = {
-    startup-script = <<-EOF1
-      #! /bin/bash
-      set -euo pipefail
-      apt-get update
-      sudo apt install -y apache2
-      EOF
-    EOF1
-  }
+  metadata_startup_script = file("../../scripts/startup-script.sh")
   lifecycle {
     create_before_destroy = true
   }
