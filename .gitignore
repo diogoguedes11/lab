@@ -6,3 +6,4 @@ google-cloud/private-gke/terraform.tfstate.d/dev/.terraform.tfstate.lock.info
 terraform.tfstate.backup
 .terraform.tfstate
 .terrafmrom.tfstate.*
+myenv
