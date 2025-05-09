@@ -16,6 +16,7 @@ def get_client() -> google.cloud.logging.Client:
     return client
 
 def fetch_logs(client: google.cloud.logging.Client,severity: str):
+    """Fetch logs from Google Cloud project filtered by severity."""
     logs = client.list_entries(page_size=10,order_by=DESCENDING)
     return filter(lambda x: x.severity == severity,logs)
 
