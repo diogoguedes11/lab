@@ -1,7 +1,8 @@
 resource "google_sql_database_instance" "main" {
-  name             = "psc-instance"
-  database_version = "MYSQL_8_0"
-  project          = var.project_id_a
+  name                = "psc-instance"
+  database_version    = "MYSQL_8_0"
+  project             = var.project_id_a
+  deletion_protection = false
   settings {
     tier = "db-f1-micro"
     ip_configuration {
