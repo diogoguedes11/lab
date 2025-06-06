@@ -1,4 +1,0 @@
-grafana:
-  adminPassword: admin
-  service:
-    type: LoadBalancer
