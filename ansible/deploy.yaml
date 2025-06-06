@@ -10,10 +10,10 @@
     - name: upgrade all packages
       apt:
         upgrade: dist
-- name: install k3s cluster
-  hosts: all
-  become: true
-  tasks:
-    - name: install k3s
-      shell: |
-        curl -sfL https://get.k3s.io | sh -
+    - name: install k3s cluster
+      hosts: all
+      become: true
+      tasks:
+        - name: install k3s
+          shell: |
+            curl -sfL https://get.k3s.io | sh -
