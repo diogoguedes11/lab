@@ -37,6 +37,19 @@ def detect_objects(path: str) -> None:
         print(f"Score: {obj.score}")
         print("Normalized Vertices:")
 
+def detect_logo(path: str) -> None:
+     """Detects logos in an image."""
+     client = vision.ImageAnnotatorClient()
+     with open(path, "rb") as image_file:
+         content = image_file.read()
+     image = vision.Image(content=content)
+     response  = client.logo_detection(image=image)
+     logos = response.logo_annotations
+     print("Logos:")
+     for logo in logos:
+         print(f"Description: {logo.description}")
+         print(f"Score: {logo.score}")
 if __name__ == "__main__":
 #     detect_properties('hq720.jpg')
-     detect_objects('hq720.jpg')
+     # detect_objects('hq720.jpg')
+     detect_logo('vodafone.jpg')   
