@@ -18,3 +18,14 @@
       shell: |
         curl -sfL https://get.k3s.io | sh -
       when: ansible_facts['os_release'] == "Ubuntu"
+
+- name: create kubernetes namespace
+  hosts: all
+  become: true
+  tasks:
+    - name: create namespace
+      kubernetes.core.k8s:
+        name: observability
+        api_version: v1
+        kind: Namespace
+        state: present
