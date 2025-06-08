@@ -1,5 +1,5 @@
 from google.cloud import vision
-
+"""Cloud VISION """
 
 def detect_properties(path: str) -> None:
     """Detects properties of an image."""
