@@ -17,13 +17,13 @@ CREATE OR REPLACE MODEL
 
 OPTIONS
 
-  ( model_type='LOGISTIC_REG',
+  ( model_type='LOGISTIC_REG', -- aglorithm to use for classification
 
-    auto_class_weights=TRUE,
+    auto_class_weights=TRUE, -- automatically compute class weights
 
-    data_split_method='NO_SPLIT',
+    data_split_method='NO_SPLIT', -- do not split into train and test data, use the entire dataset
 
-    input_label_cols=['species'],
+    input_label_cols=['species'], -- the column we want to predict
 
     max_iterations=10) AS
 
@@ -47,7 +47,7 @@ SELECT
 
 *
 
-FROM `bigquery-public-data.ml_datasets.iris`))
+FROM `bigquery-public-data.ml_datasets.iris`)) -- evaluate the model on the same dataset 
 
 
 
