@@ -49,5 +49,16 @@ SELECT
 
 FROM `bigquery-public-data.ml_datasets.iris`)) -- evaluate the model on the same dataset 
 
+-- predict using the model 
+
+select * from ML.PREDICT(MODEL bqml_tutorial.irisdata_model, (SELECT
+
+5.1 as sepal_length,
+
+2.5 as petal_length,
+
+3.0 as petal_width,
+
+1.1 as sepal_width))
 
 
