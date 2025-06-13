@@ -8,3 +8,4 @@ terraform.tfstate.backup
 .terrafmrom.tfstate.*
 myenv
 venv
+beam
