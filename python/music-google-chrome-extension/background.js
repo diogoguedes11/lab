@@ -1,6 +1,6 @@
 chrome.action.onClicked.addListener((tab) => {
-  const windowWidth = 400; 
-  const windowHeight = 600;
+  const windowWidth = 300; 
+  const windowHeight = 200;
 
   chrome.windows.create({
     url: chrome.runtime.getURL("player.html"), 
@@ -11,7 +11,7 @@ chrome.action.onClicked.addListener((tab) => {
 });
 
  const selector = document.getElementById("streamSelector");
- const player = document.getElementById("lofiPlayer");
+ const player = document.getElementById("Player");
 
     selector.addEventListener("change", () => {
       const videoId = selector.value;
