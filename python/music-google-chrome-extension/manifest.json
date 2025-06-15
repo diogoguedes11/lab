@@ -15,6 +15,6 @@
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "assets/icons/images/icon16.png"
+    "16": "assets/icons/icon16.jpeg"
   }
 }
