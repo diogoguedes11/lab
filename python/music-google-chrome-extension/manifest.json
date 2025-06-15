@@ -8,13 +8,13 @@
   ],
   "action": {
     "default_icon": {
-      "16": "assets/icons/icon16.jpeg"
+      "16": "assets/icons/icon16.png"
     }
   },
   "background": {
     "service_worker": "background.js"
   },
   "icons": {
-    "16": "assets/icons/icon16.jpeg"
+    "16": "assets/icons/icon16.png"
   }
 }
