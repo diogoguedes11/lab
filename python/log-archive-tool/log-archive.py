@@ -6,6 +6,7 @@ from datetime import datetime
 
 DEFAULT_VAR_LOCATION = '/var/log'
 OUTPUT_DIR = './archive'
+LOG_FILE = './archive_log.txt'
 
 def main():
      parser = argparse.ArgumentParser(
@@ -17,7 +18,6 @@ def main():
      datehour = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}"
      archive_name = f'log_archive_{datehour}.tar.gz'
      archive_path = os.path.join(OUTPUT_DIR,archive_name)
-     print(archive_path)
      logdir = args.logdir if args.logdir else DEFAULT_VAR_LOCATION
      if not os.path.exists(logdir):
           print(f"The path: {logdir} does not exist")
@@ -26,6 +26,10 @@ def main():
           subprocess.run(['sudo','tar','-czf', archive_path, logdir])
      except Exception as e:
           print(f"Error while arquiving logs {str(e)}")
+     # Registering date/time into our operations log_file
+     with open(LOG_FILE,"w") as f:
+          f.write(f"{datetime.now()} -> {archive_name}")
+          f.close()
      
 if __name__ == "__main__":
      main()
