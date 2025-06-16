@@ -6,11 +6,11 @@
     - name: install k3s
       shell: |
         curl -sfL https://get.k3s.io | sh -
-      when: ansible_facts['os_release'] == "Ubuntu"
+      when: ansible_facts['os_release'] == "Ubuntu" or ansible_facts['os_release'] == "Fedora"
     - name: Install FluxCD
       shell: |
         curl -s https://fluxcd.io/install.sh | sudo bash
-      when: ansible_facts['os_release'] == "Ubuntu"
+      when: ansible_facts['os_release'] == "Ubuntu" or ansible_facts['os_release'] == "Fedora"
 - name: create kubernetes namespace
   hosts: all
   become: true
