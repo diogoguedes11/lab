@@ -1,15 +1,4 @@
 ---
-# - name: update the system
-#   hosts: all
-#   become: true
-#   tasks:
-#     - name: update apt cache
-#       apt:
-#         update_cache: yes
-
-#     - name: upgrade all packages
-#       apt:
-#         upgrade: dist
 - name: install k3s cluster
   hosts: all
   become: true
@@ -18,7 +7,10 @@
       shell: |
         curl -sfL https://get.k3s.io | sh -
       when: ansible_facts['os_release'] == "Ubuntu"
-
+    - name: Install FluxCD
+      shell: |
+        curl -s https://fluxcd.io/install.sh | sudo bash
+      when: ansible_facts['os_release'] == "Ubuntu"
 - name: create kubernetes namespace
   hosts: all
   become: true
