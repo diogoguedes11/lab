@@ -22,7 +22,7 @@ echo "Logged-in users: $USERS"
 echo -e "\nCPU Usage: $TOTAL_CPU_USAGE%"
 echo "Memory Usage: $TOTAL_MEMORY_USAGE"
 echo "Disk Usage: $TOTAL_DISK_USAGE"
-
+ 
 echo -e "\nTop 5 CPU-consuming processes:"
 echo "$TOP_5_CPU_PROCESSES"
 
