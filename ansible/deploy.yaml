@@ -1,23 +1,15 @@
 ---
-- name: install k3s cluster
+- name: install k3s cluster if not already installed
   hosts: all
   become: true
   tasks:
     - name: install k3s
       shell: |
         curl -sfL https://get.k3s.io | sh -
-      when: ansible_facts['os_release'] == "Ubuntu" or ansible_facts['os_release'] == "Fedora"
-    - name: Install FluxCD
-      shell: |
-        curl -s https://fluxcd.io/install.sh | sudo bash
-      when: ansible_facts['os_release'] == "Ubuntu" or ansible_facts['os_release'] == "Fedora"
-- name: create kubernetes namespace
-  hosts: all
-  become: true
-  tasks:
-    - name: create namespace
-      kubernetes.core.k8s:
-        name: observability
-        api_version: v1
-        kind: Namespace
-        state: present
+      changed_when: false # Prevents Ansible from marking the task as changed every time it runs
+    - name: fetch kubeconfig to /tmp/kubeconfig
+      become: true
+      ansible.builtin.fetch: # retrieves files from remote hosts
+        src: /etc/rancher/k3s/k3s.yaml
+        dest: /tmp/
+        flat: yes
