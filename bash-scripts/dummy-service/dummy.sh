@@ -5,4 +5,3 @@ while true; do
   sleep 10
 done
 
-#TODO: https://roadmap.sh/projects/dummy-systemd-service
