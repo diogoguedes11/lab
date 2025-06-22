@@ -1,0 +1,31 @@
+---
+- name: Base server setup
+  hosts:
+  become: true
+  tasks:
+    - name: Update and upgrade apt packages
+      ansible.builtin.apt:
+        upgrade: yes
+        update_cache: yes
+    - name: Install common utilities
+      ansible.builtin.apt:
+        name:
+          - curl
+          - wget
+          - git
+          - vim
+          - htop
+          - unzip
+          - ca-certificates
+          - gnupg
+          - software-properties-common
+          - net-tools
+          - jq
+          - ufw
+          - fail2ban
+        state: present
+
+    - name: Install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
