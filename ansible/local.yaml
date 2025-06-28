@@ -6,7 +6,7 @@
         update_cache: true
         state: present
   tasks:
-    - import_tasks: baseutils/utils.yaml
-    - import_tasks: fail2ban/fail2ban.yaml
+    # - import_tasks: baseutils/utils.yaml
+    # - import_tasks: fail2ban/fail2ban.yaml
     - import_tasks: nginx/nginx.yaml
   # - include: k3s/k3s.yaml

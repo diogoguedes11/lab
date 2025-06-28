@@ -1,20 +1,11 @@
-- name: Install nginx
+- name: install nginx
   become: true
-  ansible.builtin.apt:
+  apt:
     name: nginx
     state: present
-# - name: Copy Nginx configuration
-#   become: true
-#   template:
-#     src: nginx.conf.j2
-#     dest: /etc/nginx/nginx.conf
-- name: Enable nginx service
-  become: true
-  service:
-    name: nginx
-    enabled: yes
-- name: Start nginx service
+- name: ensure nginx is running
   become: true
   service:
     name: nginx
     state: started
+    enabled: true
