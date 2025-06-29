@@ -24,9 +24,14 @@ def main():
 
     if args.command == 'init':
           print(f"Initializing: {args.filepath}")
-          with open(args.filepath,'rb') as f:
-               digest = hashlib.file_digest(f,"sha256")
-               hash_value = digest.hexdigest()
+          try:
+               with open(args.filepath,'rb') as f:
+                    digest = hashlib.file_digest(f,"sha256")
+                    hash_value = digest.hexdigest()
+          except FileNotFoundError:
+               print("Error: file not found")
+          except Exception as e:
+               print(f"Error: {e}")
     elif args.command == 'check':
         print(f"Checking: {args.filepath}")
 
