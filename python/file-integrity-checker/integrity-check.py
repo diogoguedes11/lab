@@ -58,6 +58,7 @@ def update(filepath: Path) -> None:
      except FileExistsError:
          print("File does not exist.")
 
+
 def main():
      parser = argparse.ArgumentParser(
         prog='File checker',
@@ -77,10 +78,6 @@ def main():
     # update command
      update_parser = subparsers.add_parser('update', help='Update the file integrity info')
      update_parser.add_argument('filepath', help='Path to the file to update')
-
-    # -check command
-     minus_check_parser = subparsers.add_parser('-check', help='Check if the file is modified.')
-     minus_check_parser.add_argument('filepath',help='Path to the file to update') 
      args = parser.parse_args()
 
      if args.command == 'init':
