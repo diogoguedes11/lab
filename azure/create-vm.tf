@@ -10,19 +10,20 @@ terraform {
 variable "prefix" {
   default = "tst"
 }
+variable "subscription_id" {
+  description = "The subscription id"
+}
 
 variable "resource_group_name" {
   description = "The name of the resource group"
-  default     = "rg"
 }
 
 variable "location" {
   description = "The Azure region where resources will be created"
-  default     = "West Europe"
 }
 
 provider "azurerm" {
-  subscription_id = "1e94ff55-52d2-4496-9217-9eacba339387"
+  subscription_id = ""
   features {}
 }
 
@@ -56,7 +57,7 @@ resource "azurerm_virtual_machine" "main" {
   location              = var.location
   resource_group_name   = var.resource_group_name
   network_interface_ids = [azurerm_network_interface.this.id]
-  vm_size               = "Standard_DS1_v2"
+  vm_size               = "Standard_B1ls"
 
   # Uncomment this line to delete the OS disk automatically when deleting the VM
   delete_os_disk_on_termination = true
