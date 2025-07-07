@@ -7,4 +7,4 @@
         state: present
   tasks:
     - import_tasks: k3s/k3s.yaml
-      #    - import_tasks: kube-prom-stack/kube-prom-stack.yml
+    - import_tasks: kube-prom-stack/kube-prom-stack.yml
