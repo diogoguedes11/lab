@@ -1,5 +1,7 @@
 package main
 
+// Marshall serializes json which means transforms my struct data to Json mode
+// Unmarshall is the reverse (deserialization)
 import (
 	"encoding/json"
 	"fmt"
@@ -35,6 +37,7 @@ func main() {
 
     switch args[1] {
 	case "add":
+		{
 		newTask := Task{
 			Id:        fmt.Sprintf("%d", len(tasks)+1), // Auto ID based on length
 			Body: 	 string(args[2]),
@@ -57,6 +60,20 @@ func main() {
 		}
 
 		fmt.Println("Task added successfully!")
+	}
+
+	case "delete":
+		idToRemove := args[2]	
+		for i, t := range tasks{
+			if t.Id == idToRemove{
+				tasks = append(tasks[:i],tasks[i+1:]...)
+				break
+			}
+		}	
+		updatedFile , err := json.MarshalIndent(tasks,""," ")
+		if err == nil {
+			os.WriteFile(filename,updatedFile, 0644)	
 		}
+	}
 
 }
