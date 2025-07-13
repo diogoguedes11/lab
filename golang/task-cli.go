@@ -76,13 +76,27 @@ func main() {
 		}
 	
 	case "list":
-		for _ , t  := range tasks {
-			fmt.Println("======================================================")
-			fmt.Println("Id:",t.Id)
-			fmt.Println("Body:",t.Body)
-			fmt.Println("CreatedAt:",t.CreatedAt)
-			fmt.Println("UpdatedAt:",t.UpdatedAt)
-			fmt.Println("Status:",t.Status)
-		}	
+		if len(args) < 3 {
+			for _ , t  := range tasks {
+				fmt.Println("======================================================")
+				fmt.Println("Id:",t.Id)
+				fmt.Println("Body:",t.Body)
+				fmt.Println("CreatedAt:",t.CreatedAt)
+				fmt.Println("UpdatedAt:",t.UpdatedAt)
+				fmt.Println("Status:",t.Status)
+			}	
+		}
+		if len(args) == 3 {
+			for _ , t  := range tasks {
+				if args[2] == t.Status {
+					fmt.Println("======================================================")
+					fmt.Println("Id:",t.Id)
+					fmt.Println("Body:",t.Body)
+					fmt.Println("CreatedAt:",t.CreatedAt)
+					fmt.Println("UpdatedAt:",t.UpdatedAt)
+					fmt.Println("Status:",t.Status)
+				}
+			}
+		}
 	}
 }
