@@ -74,6 +74,15 @@ func main() {
 		if err == nil {
 			os.WriteFile(filename,updatedFile, 0644)	
 		}
+	
+	case "list":
+		for _ , t  := range tasks {
+			fmt.Println("======================================================")
+			fmt.Println("Id:",t.Id)
+			fmt.Println("Body:",t.Body)
+			fmt.Println("CreatedAt:",t.CreatedAt)
+			fmt.Println("UpdatedAt:",t.UpdatedAt)
+			fmt.Println("Status:",t.Status)
+		}	
 	}
-
 }
