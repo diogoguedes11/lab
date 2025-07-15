@@ -17,6 +17,50 @@ type Task struct {
     UpdatedAt string `json:"updatedAt"`
 }
 
+
+func deleteRecord(id string,tasks []Task,filename string ) []Task {
+	idToRemove := id	
+	for i, t := range tasks{
+		if t.Id == idToRemove{
+			tasks = append(tasks[:i],tasks[i+1:]...)
+			break
+		}
+	}	
+	updatedFile , err := json.MarshalIndent(tasks,""," ")
+	if err == nil {
+		os.WriteFile(filename,updatedFile, 0644)	
+	}
+	return tasks
+}
+
+func updateRecord(id string, body string, tasks []Task, filename string) []Task {
+	for _ , t := range tasks {
+			if id == t.Id {
+				
+				updatedTask := Task{
+					Id:        t.Id, // Auto ID based on length
+					Body: 	 body,
+					Status:    t.Status,
+					CreatedAt: t.CreatedAt,
+					UpdatedAt: t.UpdatedAt,
+				}
+				tasks = deleteRecord(t.Id,tasks,filename)
+				tasks = append(tasks,updatedTask)
+			}
+		}
+		
+		// Step 4: Marshal updated slice back to JSON
+		updatedData, err := json.MarshalIndent(tasks, "", "  ")
+		if err != nil {
+			fmt.Println("Error encoding JSON:", err)
+		}
+
+		// Step 5: Write JSON back to file (overwrite)
+		if err := os.WriteFile(filename, updatedData, 0644); err != nil {
+			fmt.Println("Error writing to file:", err)
+		}
+		return tasks
+}
 func main() {
     filename := "tasks.json"
     args := os.Args
@@ -63,17 +107,7 @@ func main() {
 	}
 
 	case "delete":
-		idToRemove := args[2]	
-		for i, t := range tasks{
-			if t.Id == idToRemove{
-				tasks = append(tasks[:i],tasks[i+1:]...)
-				break
-			}
-		}	
-		updatedFile , err := json.MarshalIndent(tasks,""," ")
-		if err == nil {
-			os.WriteFile(filename,updatedFile, 0644)	
-		}
+		deleteRecord(args[2],tasks,filename)
 	
 	case "list":
 		if len(args) < 3 {
@@ -98,5 +132,8 @@ func main() {
 				}
 			}
 		}
+
+	case "update":
+		updateRecord(args[2],args[3],tasks,filename)
 	}
 }
