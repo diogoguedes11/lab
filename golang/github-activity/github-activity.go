@@ -11,9 +11,7 @@ import (
 )
 
 
-func main() {
-	args := os.Args
-	url := fmt.Sprintf("https://api.github.com/users/%v/events",args[1])
+func fetchData(url string) string {
 	response, err := http.Get(url)
 
 	if err != nil {
@@ -22,22 +20,53 @@ func main() {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		log.Fatalf("Error: received status code: %v", response.StatusCode)
+        log.Fatalf("Error: GitHub API returned status code: %v", response.StatusCode)
 	}
 	body,err := io.ReadAll(response.Body)
 
 	if err != nil {
-		log.Fatalf("Some error occurred when reading the json content %v",err)
+		log.Fatalf("Error reading response body: %v", err)	
 	}
+	return string(body)
+}
 
-	json := string(body)
+func main() {
+    args := os.Args
 
-	operationType := gjson.Get(json,"#.type")
-	author := gjson.Get(json,"#.actor.display_login")
-	repo := gjson.Get(json,"#.repo.url")
-	fmt.Println(author)
-	fmt.Println(repo)
-	fmt.Println(operationType)
-	
+    if len(args) < 2 {
+        log.Fatalf("Usage: github-activity <github_username>")
+    }
+    username := args[1]
+    url := fmt.Sprintf("https://api.github.com/users/%v/events", username)
+    jsonData := fetchData(url)
 
+    fmt.Printf("Recent activity for %s:\n", username)
+
+    // Process and print data for each event
+    gjson.Parse(jsonData).ForEach(func(key, value gjson.Result) bool {
+        eventType := value.Get("type").String()
+        repo := value.Get("repo.name").String()
+
+        switch eventType {
+		case "PushEvent":
+			commitCount := value.Get("payload.commits.#").Int()
+			if commitCount > 0 {
+				plural := "s"
+				if commitCount == 1 {
+					plural = ""
+				}
+				fmt.Printf("- Pushed %d commit%s to %s\n", commitCount, plural, repo)
+			}
+		case "IssuesEvent":
+			action := value.Get("payload.action").String()
+			fmt.Printf("- %s an issue in %s\n", action, repo)
+		case "WatchEvent":
+			// Example for another event type from the requirements
+			action := value.Get("payload.action").String()
+			if action == "started" {
+				fmt.Printf("- Starred %s\n", repo)
+			}
+        }
+        return true
+    })
 }
