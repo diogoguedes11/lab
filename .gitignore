@@ -9,3 +9,5 @@ terraform.tfstate.backup
 myenv
 venv
 beam
+go.sum
+go.mod
