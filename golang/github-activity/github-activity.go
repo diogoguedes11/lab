@@ -30,20 +30,8 @@ func fetchData(url string) string {
 	return string(body)
 }
 
-func main() {
-    args := os.Args
-
-    if len(args) < 2 {
-        log.Fatalf("Usage: github-activity <github_username>")
-    }
-    username := args[1]
-    url := fmt.Sprintf("https://api.github.com/users/%v/events", username)
-    jsonData := fetchData(url)
-
-    fmt.Printf("Recent activity for %s:\n", username)
-
-    // Process and print data for each event
-    gjson.Parse(jsonData).ForEach(func(key, value gjson.Result) bool {
+func outputGithubInfo(jsonData string){
+ gjson.Parse(jsonData).ForEach(func(key, value gjson.Result) bool {
         eventType := value.Get("type").String()
         repo := value.Get("repo.name").String()
 
@@ -69,4 +57,17 @@ func main() {
         }
         return true
     })
+}
+
+func main() {
+    args := os.Args
+    // Handle number of args
+    if len(args) < 2 {
+        log.Fatalf("Usage: github-activity <github_username>")
+    }
+    username := args[1]
+    url := fmt.Sprintf("https://api.github.com/users/%v/events", username)
+    jsonData := fetchData(url)
+    fmt.Printf("Recent activity for %s:\n", username)
+    outputGithubInfo(jsonData)
 }
