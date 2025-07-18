@@ -12,24 +12,6 @@ import (
 )
 
 
-func nowPlaying() string{
-	url := "https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1"
-
-	req, _ := http.NewRequest("GET", url, nil)
-
-	MOVIE_API_KEY := os.Getenv("MOVIE_API_KEY")
-	req.Header.Add("accept", "application/json")
-	req.Header.Add("Authorization", "Bearer "+MOVIE_API_KEY)
-
-	res, _ := http.DefaultClient.Do(req)
-
-	defer res.Body.Close()
-	body, _ := io.ReadAll(res.Body)
-
-	return string(body)
-}
-
-
 func fetchFromTMDB(endpoint string) string {
 	url := fmt.Sprintf("https://api.themoviedb.org/3%s", endpoint)
 	apiKey := os.Getenv("MOVIE_API_KEY")
@@ -114,6 +96,8 @@ func main(){
 			endpoint = "/movie/top_rated?language=en-US&page=1"
 		case "upcoming":
 			endpoint = "/movie/upcoming?language=en-US&page=1"
+		case "trending":
+			endpoint = "/trending/all/day?language=en-US"
 		default:
 			log.Fatalf("Error Unknown command: '%s'",command)
 	}
