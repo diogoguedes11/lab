@@ -1,16 +1,38 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"os"
+	"log"
+	"net/http"
+	"time"
 )
 
 
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+	
+}
+
 func main() {
-	args := os.Args
+	port := flag.String("port", "8080", "port to listen on")
+	origin := flag.String("origin", "http://localhost", "origin server URL")
 
-	port := args[1]
-	origin := args[2]
+	flag.Parse()
 
-	fmt.Println(port,origin)
+	fmt.Println("Port:", *port)
+	fmt.Println("Origin:", *origin)
+
+	
+	s := &http.Server{
+		Addr:           ":8080",
+		ReadTimeout:    10 * time.Second,
+		WriteTimeout:   10 * time.Second,
+		MaxHeaderBytes: 1 << 20,
+		Handler: http.HandlerFunc(handleRequest),
+	}
+	log.Println("Starting proxy server on :8080")
+	err := s.ListenAndServe()
+	if err != nil {
+		log.Fatal("Error starting proxy server: ", err)
+	}
 }
