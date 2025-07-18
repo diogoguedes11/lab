@@ -1,6 +1,6 @@
 # helm repo add hashicorp https://helm.releases.hashicorp.com
 # helm repo update
-# cdhelm install consul hashicorp/consul --values consul-values.yaml --create-namespace --namespace consul
+# helm install consul hashicorp/consul --values consul-values.yaml --create-namespace --namespace consul
 global:
   name: consul
   # Enable service mesh capabilities
@@ -13,5 +13,5 @@ ui:
   # Enable the Consul Web UI
   enabled: true
 connectInject:
-  # This is the magic: enables automatic sidecar proxy injection
+  # automatic sidecar proxy injection
   enabled: true
