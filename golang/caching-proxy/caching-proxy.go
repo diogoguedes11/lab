@@ -21,20 +21,19 @@ func makeHandler(origin string, cache map[string]CacheEntry ) http.HandlerFunc {
 
 	// check cache
 	cachedResponse , found := cache[key]
-	bodyBytes , err := io.ReadAll(r.Body)
-	if err != nil {
-		log.Fatalf("No body returned from the webpage %v", err)
-	}
+	
 	if found {
 		for k, vv := range cachedResponse.Header {
 			for _, v := range vv {
 				w.Header().Add(k, v)
 			}
-			w.Header().Set("X-Cache", "HIT")
-			w.WriteHeader(cachedResponse.StatusCode)
-			w.Write(cachedResponse.Body)
-			return
+			
 		}
+		w.Header().Set("X-Cache", "HIT")
+		w.WriteHeader(cachedResponse.StatusCode)
+		w.Write(cachedResponse.Body)
+		fmt.Println("Cache hit for key:", key) 
+		// If headers are not correct, the browser will makes us download the file instead of displaying it
 
 	} else {
 		// Cache miss
@@ -58,13 +57,13 @@ func makeHandler(origin string, cache map[string]CacheEntry ) http.HandlerFunc {
 			log.Printf("Error reading response body: %v", err)
 			return
 		}
-
+		respBodyBytes, err := io.ReadAll(resp.Body)
 		cache[key] = CacheEntry{
 			StatusCode: resp.StatusCode,
 			Header:     resp.Header.Clone(),
-			Body:      bodyBytes,
+			Body:      respBodyBytes,
 		}
-
+ 
 		for k , vv := range resp.Header {
 			for _, v := range vv {
 				w.Header().Add(k, v)
@@ -72,7 +71,7 @@ func makeHandler(origin string, cache map[string]CacheEntry ) http.HandlerFunc {
 		}
 		w.Header().Set("X-Cache", "MISS")
 		w.WriteHeader(resp.StatusCode)
-		_, err = w.Write(bodyBytes)}
+		_, err = w.Write(respBodyBytes)}
 }
 
 }
