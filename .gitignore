@@ -11,3 +11,4 @@ venv
 beam
 go.sum
 go.mod
+.vagrant*
