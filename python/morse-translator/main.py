@@ -32,6 +32,7 @@ def text_to_morse(msg: str) -> str:
      return ' '.join(morse_msg)
 
 def main():
+     """ Main function to run the Morse code translator. """
      msg = input("Send me a message you want to translate to Morse: ")
      print(text_to_morse(msg))
 
