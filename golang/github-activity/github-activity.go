@@ -22,7 +22,7 @@ func fetchData(url string) string {
 	if response.StatusCode != http.StatusOK {
         log.Fatalf("Error: GitHub API returned status code: %v", response.StatusCode)
 	}
-	body,err := io.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 
 	if err != nil {
 		log.Fatalf("Error reading response body: %v", err)	
@@ -31,9 +31,9 @@ func fetchData(url string) string {
 }
 
 func outputGithubInfo(jsonData string){
- gjson.Parse(jsonData).ForEach(func(key, value gjson.Result) bool {
-        eventType := value.Get("type").String()
-        repo := value.Get("repo.name").String()
+ gjson.Parse(jsonData).ForEach(func(_, value gjson.Result) bool {
+		eventType := value.Get("type").String()
+		repo := value.Get("repo.name").String()
 
         switch eventType {
 		case "PushEvent":
@@ -60,12 +60,11 @@ func outputGithubInfo(jsonData string){
 }
 
 func main() {
-    args := os.Args
-    // Handle number of args
-    if len(args) < 2 {
-        log.Fatalf("Usage: github-activity <github_username>")
-    }
-    username := args[1]
+	// Handle number of args
+	if len(os.Args) < 2 {
+		log.Fatalf("Usage: github-activity <github_username>")
+	}
+	username := os.Args[1]
     url := fmt.Sprintf("https://api.github.com/users/%v/events", username)
     jsonData := fetchData(url)
     fmt.Printf("Recent activity for %s:\n", username)
