@@ -1,0 +1,7 @@
+pipeline {
+     agent any // Use any available agent
+     tools {
+          maven 'MAVEN' // name of the Maven installation tool
+          jdk 'JDK17' //  name of the JDK installation tool
+     }
+}
