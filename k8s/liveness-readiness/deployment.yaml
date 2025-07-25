@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: probe-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: probe-test
+  template:
+    metadata:
+      labels:
+        app: probe-test
+    spec:
+      containers:
+        - name: probe-container
+          image: jmalloc/echo-server:0.3.0 # simple HTTP server
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          env:
+            - name: ECHO_SERVER_HEALTH_PATH
+              value: "/healthz"
+            - name: ECHO_SERVER_READINESS_PATH
+              value: "/ready"
