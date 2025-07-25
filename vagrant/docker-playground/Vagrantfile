@@ -18,26 +18,95 @@ Vagrant.configure("2") do |config|
     machine.vm.box = "ubuntu/jammy64"
     machine.vm.hostname = "lab-ubuntu-jammy"
     machine.vm.network "private_network", ip: "192.168.56.14"
+    machine.vm.boot_timeout = 300  # Reduced to 5 minutes
+    
+    # Provider-specific configuration for lab VM
+    machine.vm.provider "virtualbox" do |vb|
+      vb.name = "lab-ubuntu-jammy"
+      vb.gui = false  # Disable GUI for faster boot
+      vb.memory = "1024"  # Reduced memory for faster boot
+      vb.cpus = "2"
+      vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+      vb.customize [ "modifyvm", :id, "--natdnshostresolver1", "on" ]
+      vb.customize [ "modifyvm", :id, "--natdnsproxy1", "on" ]
+      vb.customize [ "modifyvm", :id, "--accelerate3d", "off" ]
+      vb.customize [ "modifyvm", :id, "--audio", "none" ]
+    end
+    
     machine.vm.provision "shell", inline: <<-SHELL
-     apt-get update
-     sudo apt install -y apt-transport-https ca-certificates curl software-properties-common
-     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-     sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
-     sudo apt install -y docker-ce
-     sudo systemctl start docker
-     sudo usermod -aG docker $USER
-     newgrp docker  
-
-     # curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable=helm-controller" sh
-     # curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-     # sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-     # sudo mkdir -p /home/vagrant/.kube
-     # sudo cp /etc/rancher/k3s/k3s.yaml /home/vagrant/.kube/config
-     # sudo chmod 607 /home/vagrant/.kube/config # Restrict permissions
-     # kubectl get pods
+     # Update package list
+     apt-get update -qq
+     
+     # Install Docker prerequisites
+     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+       apt-transport-https \
+       ca-certificates \
+       curl \
+       software-properties-common
+     
+     # Add Docker GPG key and repository
+     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
+     
+     # Install Docker
+     DEBIAN_FRONTEND=noninteractive apt-get update -qq
+     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-ce
+     
+     # Start Docker and add vagrant user to docker group
+     systemctl start docker
+     systemctl enable docker
+     usermod -aG docker vagrant
+     
+     echo "Docker installation completed"
    SHELL
   end
-
+  
+  config.vm.define "agent-ubuntu-jammy" do |machine|
+    machine.vm.box = "ubuntu/jammy64"
+    machine.vm.hostname = "agent-ubuntu-jammy"
+    machine.vm.network "private_network", ip: "192.168.56.15"
+    machine.vm.boot_timeout = 300  # Reduced to 5 minutes
+    
+    # Provider-specific configuration for agent VM
+    machine.vm.provider "virtualbox" do |vb|
+      vb.name = "agent-ubuntu-jammy"
+      vb.gui = false  # Disable GUI for faster boot
+      vb.memory = "1024"  # Reduced memory for faster boot
+      vb.cpus = "2"
+      vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+      vb.customize [ "modifyvm", :id, "--natdnshostresolver1", "on" ]
+      vb.customize [ "modifyvm", :id, "--natdnsproxy1", "on" ]
+      vb.customize [ "modifyvm", :id, "--accelerate3d", "off" ]
+      vb.customize [ "modifyvm", :id, "--audio", "none" ]
+    end
+    
+    machine.vm.provision "shell", inline: <<-SHELL
+     # Update package list
+     apt-get update -qq
+     
+     # Install Docker prerequisites
+     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+       apt-transport-https \
+       ca-certificates \
+       curl \
+       software-properties-common
+     
+     # Add Docker GPG key and repository
+     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
+     add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu jammy stable"
+     
+     # Install Docker
+     DEBIAN_FRONTEND=noninteractive apt-get update -qq
+     DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker-ce
+     
+     # Start Docker and add vagrant user to docker group
+     systemctl start docker
+     systemctl enable docker
+     usermod -aG docker vagrant
+     
+     echo "Docker installation completed"
+    SHELL
+  end
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
   # `vagrant box outdated`. This is not recommended.
@@ -56,11 +125,6 @@ Vagrant.configure("2") do |config|
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-   
-# Set the VM name for easier identification in VirtualBox
-   config.vm.provider "virtualbox" do |vb|
-     vb.name = "lab-ubuntu-jammy"
-  end
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
   # your network.
@@ -80,13 +144,5 @@ Vagrant.configure("2") do |config|
   # Provider-specific configuration so you can fine-tune various
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
-  #
-   config.vm.provider "virtualbox" do |vb|
-  #   # Display the VirtualBox GUI when booting the machine
-     vb.gui = true
-     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
-  #   # Customize the amount of memory on the VM:
-     vb.memory = "3000"
-        vb.cpus = "2"
-   end
+  # (Provider settings are now configured per VM above)
 end
