@@ -1,6 +1,3 @@
-import csv
-
-
 
 def main():
      process_usage = dict()
