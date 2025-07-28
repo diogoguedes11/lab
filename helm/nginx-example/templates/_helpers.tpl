@@ -35,13 +35,14 @@ Common labels
 */}}
 {{- define "nginx-example.labels" -}}
 helm.sh/chart: {{ include "nginx-example.chart" . }}
+app: v1
 {{ include "nginx-example.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
-k
+
 {{/*
 Selector labels
 */}}
