@@ -51,6 +51,13 @@ service:
   type: ClusterIP
   port: 80
 
+externalSecret:
+  enabled: true
+  secretStoreRef: "my-secret-store"
+  secretName: "nginx-secret"
+  data:
+    username: "admin"
+    password: "admin" # testing only
 ingress:
   enabled: true
   className: ""
