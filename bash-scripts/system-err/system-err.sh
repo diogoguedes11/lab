@@ -32,15 +32,15 @@ filter_services() {
 
 main() {
      while true; do
-          read -p "Choose between [boot_errors],[filter_err] to get the system error messages or [exit] to leave the program: " option
+          read -p "Choose between [boot],[filter] to get the system error messages or [exit] to leave the program: " option
           clear
           option=$(echo "$option" | xargs) # remove whitespaces
           case "$option" in 
-          boot_errors)
+          boot)
                     boot_errors "$option"
                     ;;
 
-          filter_err)
+          filter)
                     read -p "Which service do you want to filter on? ex: [dmesg]:  " service
                     filter_services "$service"
                     ;;
@@ -49,7 +49,7 @@ main() {
                exit 0
                ;;
           *)
-               echo  "Invalid option. Please choose either boot_errors or filter_err."
+               echo  "Invalid option. Please choose either boot , filter or exit."
                ;;
           esac
      done
