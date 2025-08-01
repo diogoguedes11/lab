@@ -5,7 +5,9 @@
 boot_errors() {
      echo "You chose: $1"
      echo "Errors from system boot:"
-     journalctl -p err -b
+     if ! journalctl -p err -b; then
+          echo "Error: unable to read journal."
+     fi
 }
 # Filter errors by service name
 filter_services() {
@@ -15,6 +17,10 @@ filter_services() {
           continue
      fi
      filter_err=$(journalctl -p err -b --grep "$service")
+     if [ $? -ne 0 ]; then
+          echo "Unable to read journal."
+          return
+     fi
      if [[ -z "$filter_err" ]]; then
           echo "No errors found for service: $service"
      else
@@ -28,6 +34,7 @@ main() {
      while true; do
           read -p "Choose between [boot_errors],[filter_err] to get the system error messages or [exit] to leave the program: " option
           clear
+          option=$(echo "$option" | xargs) # remove whitespaces
           case "$option" in 
           boot_errors)
                     boot_errors "$option"
