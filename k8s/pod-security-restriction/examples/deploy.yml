@@ -14,7 +14,6 @@ spec:
           drop: ["ALL"]
         seccompProfile:
           type: RuntimeDefault
-
 ---
 apiVersion: v1
 kind: Pod
