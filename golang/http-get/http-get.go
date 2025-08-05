@@ -8,14 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"strings"
 )
-
+type Response interface { // you create an interface as a general way to handle different types of responses
+	getResponse() string
+}
 //  {"page":"words","input":"word1","words":["word1"]}
 type Words struct {
 	Page  string   `json:"page"` // we look for the page attribute
 	Input string  `json:"input"`
 	Words []string `json:"words"` // we look for the words attribute
+	
 }
 
 type Occurrence struct {
@@ -26,6 +28,98 @@ type Page struct {
 	Name  string   `json:"page"` // we look for the page attribute
 }
 
+func (w Words) getResponse() string {
+	return fmt.Sprintf("Page: %s, Input: %s, Words: %v", w.Page, w.Input, w.Words)
+}
+
+func (o Occurrence) getResponse() string { //overloading, we use the same function name but different types
+	fmt.Printf("Contents:\nPage name: %s\n",o.Page)
+	fmt.Printf("Words:\n")
+	for word,occurrence := range(o.Words) {
+		fmt.Printf("- %s: %d\n", word,occurrence)
+	}
+	return fmt.Sprintf("Page: %s, Words: %v", o.Page, o.Words)
+}
+
+
+func doRequest(requestUrl string) (Response, error) {
+	if _, err := url.ParseRequestURI(requestUrl); err != nil {
+		return nil, RequestError{
+			HTTPCode: 400,
+			Body:     fmt.Sprintf("invalid URL: %v", err),
+			Err:      "Bad Request",
+		}
+	}
+	fmt.Println("Valid URL:", requestUrl)
+	resp, err := http.Get(requestUrl)
+	if err != nil {
+		return nil, RequestError{
+			HTTPCode: 500,
+			Body:     fmt.Sprintf("error making HTTP GET request: %v", err),
+			Err:      "Internal Server Error",
+		}
+	}
+	defer resp.Body.Close() // Ensure the response body is closed after reading
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, RequestError{
+			HTTPCode: 500,
+			Body:     fmt.Sprintf("error reading response body: %v", err),
+			Err:      "Internal Server Error",
+		}
+	}
+		if resp.StatusCode != 200 {
+			return nil, RequestError{
+				HTTPCode: resp.StatusCode,
+				Body:     string(body),
+				Err:      fmt.Sprintf("unexpected HTTP status code: %d", resp.StatusCode),
+			}
+		}
+
+		var page Page
+		
+		err = json.Unmarshal(body, &page) 
+		
+		
+		switch(page.Name) {
+			case "words":
+				var words Words
+				err := json.Unmarshal(body,&words)
+				if err != nil {
+					return nil, RequestError{
+						HTTPCode: resp.StatusCode,
+						Body:     string(body),
+						Err:      fmt.Sprintf("words: error unmarshalling json response: %v", err),
+					}
+				}
+				return words, nil
+			case "occurrence":
+				var occurrence Occurrence
+				err := json.Unmarshal(body,&occurrence)
+				if err != nil {
+					return nil, RequestError{
+						HTTPCode: resp.StatusCode,
+						Body:     string(body),
+						Err:      fmt.Sprintf("occurrence: error unmarshalling json response: %v", err),
+					}
+				}
+				
+				return occurrence, nil
+			
+		
+		}
+
+		if err != nil {
+			return nil, RequestError{
+				HTTPCode: resp.StatusCode,
+				Body:     string(body),
+				Err:      fmt.Sprintf("error unmarshalling json response: %v", err),
+			}
+		}
+	return nil,nil
+}
+
 func main() {
 	args := os.Args
 	if len(args) < 2 {
@@ -33,57 +127,15 @@ func main() {
 		fmt.Println("No arguments provided")
 		os.Exit(1)
 	}
-	if _, err := url.ParseRequestURI(args[1]); err != nil {
-		fmt.Printf("Invalid URL format: %s\n", err)
-		fmt.Println("Usage: go run http-get.go <url>")
-		os.Exit(1)
-	}
-	fmt.Println("Valid URL:", args[1])
-	resp, err := http.Get(args[1])
+	res, err := doRequest(args[1]) // Call the doRequest function with the provided URL argument
 	if err != nil {
-		log.Fatalf("Error fetching URL: %v", err)
+		if reqErr, ok := err.(RequestError); ok {
+			log.Printf("RequestError: %s", reqErr.Error())
+		}
 	}
-	defer resp.Body.Close() // Ensure the response body is closed after reading
-
-	body, err := io.ReadAll(resp.Body) 
-	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+	if res != nil {
+		fmt.Println(res.getResponse()) 
 	}
-	if resp.StatusCode != 200 {
-		fmt.Printf("Error: HTTP request failed with status code %v\n", resp.StatusCode)
-		os.Exit(1)
-	}
-
-	var page Page
 	
-	err = json.Unmarshal(body, &page) 
-     
-	
-	switch(page.Name) {
-		case "words":
-			var words Words
-			err := json.Unmarshal(body,&words)
-			if err != nil {
-				log.Fatalf("Error unmarshalling JSON response: %v", err)
-			}
-			fmt.Printf("Contents:\nPage name: %s\nInput: %s\nWords:%v",page.Name,words.Input,strings.Join(words.Words, ", "))
-		case "occurrence":
-			var occurrence Occurrence
-			err := json.Unmarshal(body,&occurrence)
-			if err != nil {
-				log.Fatalf("Error unmarshalling JSON response: %v", err)
-			}
-			fmt.Printf("Contents:\nPage name: %s\n",page.Name)
-			fmt.Printf("Words:\n")
-			for word,occurrence := range(occurrence.Words) {
-				fmt.Printf("- %s: %d\n", word,occurrence)
-			}
-		default:
-			fmt.Println("Page not found.")
-	}
-
-	if err != nil {
-		log.Fatalf("Error unmarshalling JSON response: %v", err)
-	}
 }
 
