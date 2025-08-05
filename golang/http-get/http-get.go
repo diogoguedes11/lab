@@ -14,8 +14,16 @@ import (
 //  {"page":"words","input":"word1","words":["word1"]}
 type Words struct {
 	Page  string   `json:"page"` // we look for the page attribute
-	Input string   `json:"input"` // we look for the input attribute
+	Input string  `json:"input"`
 	Words []string `json:"words"` // we look for the words attribute
+}
+
+type Occurrence struct {
+	Page  string   `json:"page"` // we look for the page attribute
+	Words map[string]int `json:"words"` // we look for the words attribute
+}
+type Page struct {
+	Name  string   `json:"page"` // we look for the page attribute
 }
 
 func main() {
@@ -46,12 +54,32 @@ func main() {
 		os.Exit(1)
 	}
 
-	var words Words
-	err = json.Unmarshal(body, &words) // Unmarshal JSON response into Words struct
+	var page Page
+	
+	err = json.Unmarshal(body, &page) 
+     
+	
+	switch(page.Name) {
+		case "words":
+			var words Words
+			err := json.Unmarshal(body,&words)
+			if err != nil {
+				log.Fatalf("Error unmarshalling JSON response: %v", err)
+			}
+			fmt.Printf("Contents:\nPage name: %s\nInput: %s\nWords:%v",page.Name,words.Input,strings.Join(words.Words, ", "))
+		case "occurrence":
+			var occurrence Occurrence
+			err := json.Unmarshal(body,&occurrence)
+			if err != nil {
+				log.Fatalf("Error unmarshalling JSON response: %v", err)
+			}
+			fmt.Printf("Contents:\nPage name: %s\nWords:%v",page.Name,occurrence.Words)
+		default:
+			fmt.Println("Page not found.")
+	}
+
 	if err != nil {
 		log.Fatalf("Error unmarshalling JSON response: %v", err)
 	}
-	fmt.Printf("Json parsed:\nPage: %s\nInput: %s\nWords: %v\n", words.Page, words.Input, strings.Join(words.Words, ", "))
-	fmt.Printf("HTTP Response status: %s\n", resp.Status)
 }
 
