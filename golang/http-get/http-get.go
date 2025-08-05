@@ -73,7 +73,11 @@ func main() {
 			if err != nil {
 				log.Fatalf("Error unmarshalling JSON response: %v", err)
 			}
-			fmt.Printf("Contents:\nPage name: %s\nWords:%v",page.Name,occurrence.Words)
+			fmt.Printf("Contents:\nPage name: %s\n",page.Name)
+			fmt.Printf("Words:\n")
+			for word,occurrence := range(occurrence.Words) {
+				fmt.Printf("- %s: %d\n", word,occurrence)
+			}
 		default:
 			fmt.Println("Page not found.")
 	}
