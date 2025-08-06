@@ -9,24 +9,8 @@ import (
 	"net/http"
 	"net/url"
 )
-type Response interface { // you create an interface as a general way to handle different types of responses
-	getResponse() string
-}
-//  {"page":"words","input":"word1","words":["word1"]}
-type Words struct {
-	Page  string   `json:"page"` // we look for the page attribute
-	Input string  `json:"input"`
-	Words []string `json:"words"` // we look for the words attribute
-	
-}
 
-type Occurrence struct {
-	Page  string   `json:"page"` // we look for the page attribute
-	Words map[string]int `json:"words"` // we look for the words attribute
-}
-type Page struct {
-	Name  string   `json:"page"` // we look for the page attribute
-}
+
 
 func (w Words) getResponse() string {
 	return fmt.Sprintf("Page: %s, Input: %s, Words: %v", w.Page, w.Input, w.Words)
@@ -106,8 +90,6 @@ func doRequest(requestUrl string) (Response, error) {
 				}
 				
 				return occurrence, nil
-			
-		
 		}
 
 		if err != nil {
@@ -135,15 +117,34 @@ func main() {
 	if err != nil {
 		log.Fatalf("Invalid URL: %v\n Usage: go run http-get.go -h ", err)
 	}
-	res, err := doRequest(parsedUrl.String()) // Call the doRequest function with the provided URL argument
-	if err != nil {
-		if reqErr, ok := err.(RequestError); ok {
-			log.Printf("RequestError: %s", reqErr.Error())
+	if password != "" {
+		token, err := loginRequest(parsedUrl.String(), password)
+		if err != nil {
+			if reqErr, ok := err.(RequestError); ok {
+				log.Printf("RequestError: %s", reqErr.Error())
+			}
+			return
 		}
+		defer token.Body.Close() // Ensure the response body is closed after reading
+		body, err := io.ReadAll(token.Body)
+		if err != nil {
+			log.Printf("Error reading response body: %v", err)
+			return
+		}
+		fmt.Println("Login successful:", string(body))
 	}
-	if res != nil {
-		fmt.Println(res.getResponse()) 
-	}
+	if password == "" {
+		res, err := doRequest(parsedUrl.String()) // Call the doRequest function with the provided URL argument
+		if err != nil {
+			if reqErr, ok := err.(RequestError); ok {
+				log.Printf("RequestError: %s", reqErr.Error())
+			}
+		}
+		if res != nil {
+			fmt.Println(res.getResponse()) 
+		}
+	}	
+
 	
 }
 
