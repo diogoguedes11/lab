@@ -2,12 +2,12 @@ package main // group of files
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 )
 type Response interface { // you create an interface as a general way to handle different types of responses
 	getResponse() string
@@ -121,13 +121,21 @@ func doRequest(requestUrl string) (Response, error) {
 }
 
 func main() {
-	args := os.Args
-	if len(args) < 2 {
-		fmt.Println("Usage: go run http-get.go <url>")
-		fmt.Println("No arguments provided")
-		os.Exit(1)
+	var (
+		requestUrl string
+		password string
+		parsedUrl *url.URL
+		err error
+	)
+	flag.StringVar(&requestUrl, "url", "", "URL to make the HTTP GET request to")
+	flag.StringVar(&password, "password", "", "Password for authentication")
+	flag.Parse()
+	
+	parsedUrl, err = url.ParseRequestURI(requestUrl) // Checks if the URL is valid 
+	if err != nil {
+		log.Fatalf("Invalid URL: %v\n Usage: go run http-get.go -h ", err)
 	}
-	res, err := doRequest(args[1]) // Call the doRequest function with the provided URL argument
+	res, err := doRequest(parsedUrl.String()) // Call the doRequest function with the provided URL argument
 	if err != nil {
 		if reqErr, ok := err.(RequestError); ok {
 			log.Printf("RequestError: %s", reqErr.Error())
