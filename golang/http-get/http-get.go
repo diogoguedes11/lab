@@ -125,13 +125,9 @@ func main() {
 			}
 			return
 		}
-		defer token.Body.Close() // Ensure the response body is closed after reading
-		body, err := io.ReadAll(token.Body)
-		if err != nil {
-			log.Printf("Error reading response body: %v", err)
-			return
-		}
-		fmt.Println("Login successful:", string(body))
+		fmt.Println("Token received:", token)
+		
+		
 	}
 	if password == "" {
 		res, err := doRequest(parsedUrl.String()) // Call the doRequest function with the provided URL argument
