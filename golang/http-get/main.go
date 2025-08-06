@@ -16,6 +16,8 @@ func (w Words) getResponse() string {
 	return fmt.Sprintf("Page: %s, Input: %s, Words: %v", w.Page, w.Input, w.Words)
 }
 
+
+
 func (o Occurrence) getResponse() string { //overloading, we use the same function name but different types
 	fmt.Printf("Contents:\nPage name: %s\n",o.Page)
 	fmt.Printf("Words:\n")
@@ -26,7 +28,7 @@ func (o Occurrence) getResponse() string { //overloading, we use the same functi
 }
 
 
-func doRequest(requestUrl string) (Response, error) {
+func doRequest(client http.Client, requestUrl string) (Response, error) {
 	if _, err := url.ParseRequestURI(requestUrl); err != nil {
 		return nil, RequestError{
 			HTTPCode: 400,
@@ -35,7 +37,7 @@ func doRequest(requestUrl string) (Response, error) {
 		}
 	}
 	fmt.Println("Valid URL:", requestUrl)
-	resp, err := http.Get(requestUrl)
+	resp, err := client.Get(requestUrl)
 	if err != nil {
 		return nil, RequestError{
 			HTTPCode: 500,
@@ -112,35 +114,45 @@ func main() {
 	flag.StringVar(&requestUrl, "url", "", "URL to make the HTTP GET request to")
 	flag.StringVar(&password, "password", "", "Password for authentication")
 	flag.Parse()
-	
-	parsedUrl, err = url.ParseRequestURI(requestUrl) // Checks if the URL is valid 
+
+	parsedUrl, err = url.ParseRequestURI(requestUrl) // Checks if the URL is valid
+	client := http.Client{}
 	if err != nil {
 		log.Fatalf("Invalid URL: %v\n Usage: go run http-get.go -h ", err)
 	}
 	if password != "" {
-		token, err := loginRequest(parsedUrl.String(), password)
+		token, err := loginRequest(client,parsedUrl.Scheme+"://"+parsedUrl.Host+"/login", password)
 		if err != nil {
 			if reqErr, ok := err.(RequestError); ok {
-				log.Printf("RequestError: %s", reqErr.Error())
+				fmt.Printf("RequestError: %s", reqErr.Error())
 			}
 			return
 		}
-		fmt.Println("Token received:", token)
-		
-		
-	}
-	if password == "" {
-		res, err := doRequest(parsedUrl.String()) // Call the doRequest function with the provided URL argument
+		client.Transport = MyJWTTransport{
+			Token: token,
+		}
+		fmt.Println("Token:", token)
+		res,err := doRequest(client, parsedUrl.String()) // Call the doRequest function with the provided URL argument
 		if err != nil {
 			if reqErr, ok := err.(RequestError); ok {
-				log.Printf("RequestError: %s", reqErr.Error())
+				fmt.Printf("RequestError: %s", reqErr.Error())
+			}
+			return
+		}
+		if res != nil {
+			fmt.Println(res.getResponse()) 
+		}
+	}
+	if password == "" {
+		res, err := doRequest(client,parsedUrl.String()) // Call the doRequest function with the provided URL argument
+		if err != nil {
+			if reqErr, ok := err.(RequestError); ok {
+				fmt.Printf("RequestError: %s", reqErr.Error())
 			}
 		}
 		if res != nil {
 			fmt.Println(res.getResponse()) 
 		}
 	}	
-
-	
 }
 

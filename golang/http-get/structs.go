@@ -1,5 +1,6 @@
 package main
 
+
 type Occurrence struct {
 	Page  string   `json:"page"` // we look for the page attribute
 	Words map[string]int `json:"words"` // we look for the words attribute
@@ -14,3 +15,4 @@ type Words struct {
 	Words []string `json:"words"` // we look for the words attribute
 	
 }
+

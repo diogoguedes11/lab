@@ -17,13 +17,13 @@ type LoginResponse struct {
 	Token string `json:"token"`
 }
 
-func loginRequest(loginUrl string, password string) (string, error) {
+func loginRequest(client http.Client, loginUrl string, password string) (string, error) {
 
 	loginRequest := LoginRequest{
 		Password: password,
 	}
 
-	body, err := json.Marshal(loginRequest) // Convert the login request to JSON
+	respBody, err := json.Marshal(loginRequest) // Convert the login request to JSON
 
 	if err != nil {
 		return "", RequestError{
@@ -40,7 +40,7 @@ func loginRequest(loginUrl string, password string) (string, error) {
 		}
 	}
 	fmt.Println("Valid URL:", loginUrl)
-	token, err := http.Post(loginUrl, "application/json", bytes.NewBuffer(body)) // Make a POST request with the JSON body
+	token, err := client.Post(loginUrl, "application/json", bytes.NewBuffer(respBody)) // Make a POST request with the JSON body
 
 	if err != nil {
 		return "", RequestError{
@@ -49,25 +49,28 @@ func loginRequest(loginUrl string, password string) (string, error) {
 			Err:      "Internal Server Error",
 		}
 	}
-	if token.StatusCode != http.StatusOK {
-		return "", RequestError{
-			HTTPCode: token.StatusCode,
-			Body:     fmt.Sprintf("unexpected HTTP status code: %d", token.StatusCode),
-			Err:      "Login Failed",
-		}
-	}
+	
 	defer token.Body.Close()
 
 	var loginResponse LoginResponse
 
-	body, err = io.ReadAll(token.Body)
+	respBody, err = io.ReadAll(token.Body)
+
 	if err != nil {
 		log.Printf("Error reading response body: %v", err)
 		return "", err
 	}
-	if err := json.Unmarshal(body, &loginResponse); err != nil {
+	if err := json.Unmarshal(respBody, &loginResponse); err != nil {
 		log.Printf("Error unmarshalling response body: %v", err)
 		return "", err
+	}
+	
+	if loginResponse.Token == "" {
+		return "", RequestError{
+			HTTPCode: token.StatusCode,
+			Body:     string(respBody),
+			Err:      "Login Failed",
+		}
 	}
 	return loginResponse.Token, nil
 }
