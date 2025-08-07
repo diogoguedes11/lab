@@ -2,6 +2,7 @@ package main // group of files
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/url"
 
@@ -31,7 +32,14 @@ func main() {
 		Password: password,
 		LoginURL: parsedUrl.Scheme + "://" + parsedUrl.Host + "/login",
 	})
-	apiInstance.DoRequest(parsedUrl.String()) // Make the HTTP GET request
+	// Reuse the same apiInstance for all requests to ensure the same token is used
+	res, err := apiInstance.DoRequest(parsedUrl.String()) // First request
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+	if res != nil {
+		fmt.Println(res.GetResponse())
+	}
 }
 
 
