@@ -5,8 +5,8 @@ import time
 def get_current_time():
      return datetime.datetime.now() 
 
-def one_hour_later(current_time):
-     return current_time + datetime.timedelta(hours=1)
+def one_hour_later(start_time):
+     return start_time + datetime.timedelta(hours=1)
      
 
 def sound_notification() -> None:
