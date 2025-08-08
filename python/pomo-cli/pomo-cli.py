@@ -5,28 +5,25 @@ import time
 def get_current_time():
      return datetime.datetime.now() 
 
-def one_hour_later(start_time):
-     return start_time + datetime.timedelta(hours=1)
+def thirty_minutes_timer(start_time):
+     return start_time + datetime.timedelta(minutes=1)
      
 
-def sound_notification() -> None:
-     file_path = "./clock-alarm.mp3"
-     if not os.path.exists(file_path):
-          print(f"File not found: {file_path}")
-          return
-     p = vlc.MediaPlayer(f"file://{os.path.abspath(file_path)}")
-     p.play()
-     time.sleep(5) # wait for the sound to finish
+def pause_notification() -> None:
+     player = vlc.MediaPlayer("file:///tmp/clock-alarm.mp3")
+     player.play()
+     time.sleep(3)  # Allow time for the sound to start playing
+     print("You did it! Make yourself proud for one more pomodoro. Keep Grinding. But never forget to take a break.")
+
 
 if __name__ == '__main__':
      current_time = get_current_time()
-     next_pause = one_hour_later(current_time)
-     print(f"Current time is: {current_time}")
-     print(f"Next pause: {next_pause}")
+     next_pause = thirty_minutes_timer(current_time)
+     print(f"Pomodoro started. Focus")
+     print(f"Next break at: {next_pause.strftime('%H:%M:%S')}")
     
      while True:
           if datetime.datetime.now() >= next_pause:
-               sound_notification()
-               print("Time to take a break (5/10 minutes), save your eyes :)")
+               pause_notification()
                break
           time.sleep(1)
