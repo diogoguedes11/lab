@@ -2,11 +2,12 @@ import datetime
 import vlc
 import time
 import argparse
+import webbrowser
 def get_current_time():
      return datetime.datetime.now() 
 
 def thirty_minutes_timer(start_time):
-     return start_time + datetime.timedelta(minutes=1)
+     return start_time + datetime.timedelta(minutes=30)
      
 
 def pause_notification() -> None:
@@ -18,6 +19,7 @@ def pause_notification() -> None:
 def start_pomodoro() -> None:
      current_time = get_current_time()
      next_pause = thirty_minutes_timer(current_time)
+     # webbrowser.open_new("https://www.youtube.com/watch?v=jfKfPfyJRdk")
      print(f"Pomodoro started. Focus")
      print(f"Next break at: {next_pause.strftime('%H:%M:%S')}")
      while True:
@@ -29,7 +31,7 @@ def start_pomodoro() -> None:
 
 if __name__ == '__main__':
      parser = argparse.ArgumentParser(prog="pomo",description="Pomodoro timer")
-     parser.add_argument("command", choices=["start","stop"], help="Command to be executed")
+     parser.add_argument("command", choices=["start"], help="Command to be executed")
      args = parser.parse_args()
      if args.command == 'start':
           start_pomodoro()
