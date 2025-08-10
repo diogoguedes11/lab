@@ -8,6 +8,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 )
 
@@ -15,6 +16,7 @@ const (
     location          = "westus"
     resourceGroupName = "my-rg"
     envSubID          = "AZURE_SUBSCRIPTION_ID"
+    virtualNetworkName = "my-vnet"
 )
 
 func getToken()  (*azidentity.DefaultAzureCredential, string) {
@@ -31,8 +33,12 @@ func getToken()  (*azidentity.DefaultAzureCredential, string) {
 
 }
 
-func createResourceGroup(ctx context.Context,clientFactory *armresources.ClientFactory, resourceName string, location string )  {
-	rgClient := clientFactory.NewResourceGroupsClient()
+func createResourceGroup(ctx context.Context,subID string , cred *azidentity.DefaultAzureCredential , resourceName string, location string )  {
+	resourceGroupClient , err := armresources.NewClientFactory(subID, cred, nil)
+	if err != nil {
+        log.Fatalf("client factory error: %v", err)
+    	}
+	rgClient := resourceGroupClient.NewResourceGroupsClient()
 	rgResp, err := rgClient.CreateOrUpdate(
 		ctx,
 		resourceGroupName,
@@ -47,13 +53,53 @@ func createResourceGroup(ctx context.Context,clientFactory *armresources.ClientF
 
 }
 
+func createVnetSubnet(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) {
+    vnetClient, err := armnetwork.NewVirtualNetworksClient(subID, cred, nil)
+    if err != nil {
+        log.Fatalf("vnet client error: %v", err)
+    }
+
+    poller, err := vnetClient.BeginCreateOrUpdate(
+        ctx,
+        resourceGroupName,
+        virtualNetworkName,
+        armnetwork.VirtualNetwork{
+            Location: to.Ptr(location),
+            Properties: &armnetwork.VirtualNetworkPropertiesFormat{
+                AddressSpace: &armnetwork.AddressSpace{
+                    AddressPrefixes: []*string{to.Ptr("10.0.0.0/16")},
+                },
+                Subnets: []*armnetwork.Subnet{
+                    {
+                        Name: to.Ptr("subnet-a"),
+                        Properties: &armnetwork.SubnetPropertiesFormat{
+                            AddressPrefix: to.Ptr("10.0.1.0/24"),
+                        },
+                    },
+                },
+            },
+        },
+        nil,
+    )
+    if err != nil {
+        log.Fatalf("begin vnet create error: %v", err)
+    }
+
+    resp, err := poller.PollUntilDone(ctx, nil)
+    if err != nil {
+        log.Fatalf("poll vnet create error: %v", err)
+    }
+    fmt.Printf("VNet created: %s\n", *resp.ID)
+}
+
 func main() {
 
     ctx := context.Background()
     cred, subID := getToken()
-    clientFactory, err := armresources.NewClientFactory(subID, cred, nil)
-    if err != nil {
-        log.Fatalf("client factory error: %v", err)
-    }
-    createResourceGroup(ctx,clientFactory,resourceGroupName,location)
+  
+    createResourceGroup(ctx,subID,cred,resourceGroupName,location)
+
+    createVnetSubnet(ctx,subID,cred)
+
+   
 }
