@@ -13,10 +13,12 @@ import (
 )
 
 const (
-    location          = "westus"
-    resourceGroupName = "my-rg"
-    envSubID          = "AZURE_SUBSCRIPTION_ID"
-    virtualNetworkName = "my-vnet"
+	location          = "westus"
+	resourceGroupName = "my-rg"
+	envSubID          = "AZURE_SUBSCRIPTION_ID"
+	virtualNetworkName = "my-vnet"
+	subnet = "subnet-a"
+	virtualMachineName = "my-ubuntu"
 )
 
 func getToken()  (*azidentity.DefaultAzureCredential, string) {
@@ -53,6 +55,11 @@ func createResourceGroup(ctx context.Context,subID string , cred *azidentity.Def
 
 }
 
+func createVirtualMachine(ctx context.Context) {
+
+}
+
+
 func createVnetSubnet(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) {
     vnetClient, err := armnetwork.NewVirtualNetworksClient(subID, cred, nil)
     if err != nil {
@@ -71,7 +78,7 @@ func createVnetSubnet(ctx context.Context, subID string, cred *azidentity.Defaul
                 },
                 Subnets: []*armnetwork.Subnet{
                     {
-                        Name: to.Ptr("subnet-a"),
+                        Name: to.Ptr(subnet),
                         Properties: &armnetwork.SubnetPropertiesFormat{
                             AddressPrefix: to.Ptr("10.0.1.0/24"),
                         },
@@ -98,7 +105,6 @@ func main() {
     cred, subID := getToken()
   
     createResourceGroup(ctx,subID,cred,resourceGroupName,location)
-
     createVnetSubnet(ctx,subID,cred)
 
    
