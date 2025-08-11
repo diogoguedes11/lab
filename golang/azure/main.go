@@ -24,6 +24,7 @@ const (
 	diskName = "my-disk"
 	publicIPName = "my-public-ip"
 	nsgName = "my-nsg"
+	adminUser         = "azureuser"
 )
 
 func getToken()  (*azidentity.DefaultAzureCredential, string) {
@@ -101,22 +102,16 @@ func createNetworkInterface(ctx context.Context, subnetID string, publicIPID str
 	return &resp.Interface
 }
 
-func createVirtualMachine(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential, networkInterfaceID string) error {
-    computeClientFactory, err := armcompute.NewVirtualMachinesClient(subID, cred, nil)
+func createVirtualMachine(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential, networkInterfaceID string) (*armcompute.VirtualMachine, error) {
+    vmClient, err := armcompute.NewVirtualMachinesClient(subID, cred, nil)
     if err != nil {
-        return fmt.Errorf("compute client factory: %w", err)
+        return nil, fmt.Errorf("virtual machines client: %w", err)
     }
 
     sshPublicKeyPath := "/home/diogo/.ssh/id_rsa.pub"
-    var sshBytes []byte
-    if _, err = os.Stat(sshPublicKeyPath); err == nil { 
-        sshBytes, err = os.ReadFile(sshPublicKeyPath)
-        if err != nil {
-            return fmt.Errorf("read ssh key: %w", err)
-        }
-    } else {
-        log.Printf("no ssh found")
-	   os.Exit(1)
+    sshBytes, err := os.ReadFile(sshPublicKeyPath)
+    if err != nil {
+        return nil, fmt.Errorf("read ssh key: %w", err)
     }
 
     parameters := armcompute.VirtualMachine{
@@ -139,18 +134,17 @@ func createVirtualMachine(ctx context.Context, subID string, cred *azidentity.De
                 },
             },
             HardwareProfile: &armcompute.HardwareProfile{
-                VMSize: to.Ptr(armcompute.VirtualMachineSizeTypesBasicA0),
+                VMSize: to.Ptr(armcompute.VirtualMachineSizeTypesStandardB1S),
             },
             OSProfile: &armcompute.OSProfile{
                 ComputerName:  to.Ptr(vmName),
-                AdminUsername: to.Ptr("admin"),
-                // Se DisablePasswordAuthentication = true, remover AdminPassword
+                AdminUsername: to.Ptr(adminUser),
                 LinuxConfiguration: &armcompute.LinuxConfiguration{
                     DisablePasswordAuthentication: to.Ptr(true),
                     SSH: &armcompute.SSHConfiguration{
                         PublicKeys: []*armcompute.SSHPublicKey{
                             {
-                                Path:    to.Ptr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", "admin")),
+                                Path:    to.Ptr(fmt.Sprintf("/home/%s/.ssh/authorized_keys", adminUser)),
                                 KeyData: to.Ptr(string(sshBytes)),
                             },
                         },
@@ -165,43 +159,45 @@ func createVirtualMachine(ctx context.Context, subID string, cred *azidentity.De
         },
     }
 
-    poller, err := computeClientFactory.BeginCreateOrUpdate(ctx, resourceGroupName, vmName, parameters, nil)
+    poller, err := vmClient.BeginCreateOrUpdate(ctx, resourceGroupName, vnetName, parameters, nil)
     if err != nil {
-        return fmt.Errorf("begin create vm: %w", err)
+        return nil, fmt.Errorf("begin create vm: %w", err)
     }
-    _, err = poller.PollUntilDone(ctx, nil)
+    res, err := poller.PollUntilDone(ctx, nil)
     if err != nil {
-        return fmt.Errorf("poll vm: %w", err)
+        return nil, fmt.Errorf("poll vm: %w", err)
     }
-    log.Printf("VM: %s", vmName)
-    return nil
+    return &res.VirtualMachine, nil
 }
 
-func createPublicIP(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) (*armnetwork.PublicIPAddress) {
-	publicIPAddressesClient, err := armnetwork.NewPublicIPAddressesClient(subID, cred, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	parameters := armnetwork.PublicIPAddress{
-		Location: to.Ptr(location),
-		Properties: &armnetwork.PublicIPAddressPropertiesFormat{
-			PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic), // Static or Dynamic
-		},
-	}
+func createPublicIP(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) *armnetwork.PublicIPAddress {
+    publicIPAddressesClient, err := armnetwork.NewPublicIPAddressesClient(subID, cred, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    parameters := armnetwork.PublicIPAddress{
+        Location: to.Ptr(location),
+        SKU: &armnetwork.PublicIPAddressSKU{
+            Name: to.Ptr(armnetwork.PublicIPAddressSKUNameStandard), // switch to Standard
+            Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
+        },
+        Properties: &armnetwork.PublicIPAddressPropertiesFormat{
+            PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic), // Standard usually Static
+        },
+    }
 
-	pollerResponse, err := publicIPAddressesClient.BeginCreateOrUpdate(ctx, resourceGroupName, publicIPName, parameters, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	resp, err := pollerResponse.PollUntilDone(ctx, nil)
-	if err != nil {
-		log.Fatal(err) 
-	}
-	return &resp.PublicIPAddress
+    pollerResponse, err := publicIPAddressesClient.BeginCreateOrUpdate(ctx, resourceGroupName, publicIPName, parameters, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    resp, err := pollerResponse.PollUntilDone(ctx, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
+    return &resp.PublicIPAddress
 }
 
-func createSubnet(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) (*armnetwork.Subnet) {
+func createSubnet(ctx context.Context, subID string, cred *azidentity.DefaultAzureCredential) *armnetwork.Subnet {
     subnetClient, err := armnetwork.NewSubnetsClient(subID, cred, nil)
     if err != nil {
         log.Fatal(err)
@@ -231,7 +227,7 @@ func createVnet(ctx context.Context, subID string, cred *azidentity.DefaultAzure
     poller, err := vnetClient.BeginCreateOrUpdate(
         ctx,
         resourceGroupName,
-        vmName,
+        vnetName,
         armnetwork.VirtualNetwork{
             Location: to.Ptr(location),
             Properties: &armnetwork.VirtualNetworkPropertiesFormat{
@@ -250,7 +246,6 @@ func createVnet(ctx context.Context, subID string, cred *azidentity.DefaultAzure
     if err != nil {
         log.Fatalf("poll vnet create error: %v", err)
     }
-    fmt.Printf("VNet created: %s\n", &resp.VirtualNetwork.ID)
     return &resp.VirtualNetwork
 }
 
@@ -318,15 +313,19 @@ func main() {
   
     createResourceGroup(ctx,subID,cred,resourceGroupName,location)
     vnet := createVnet(ctx,subID,cred)
-    fmt.Println("VNet created:", vnet.ID)
+    fmt.Println("VNet created:", *vnet.ID)
     subnet := createSubnet(ctx,subID,cred)
-    fmt.Println("Subnet created:", subnet.ID)
+    fmt.Println("Subnet created:", *subnet.ID)
     publicIP := createPublicIP(ctx, subID, cred)
-    fmt.Println("Public IP created:", publicIP.ID)
+    fmt.Println("Public IP created:", *publicIP.ID)
     nsgName := createNetworkSecurityGroup(ctx, subID, cred)
-    fmt.Println("Network Security Group created:", nsgName.ID)
+    fmt.Println("Network Security Group created:", *nsgName.ID)
     nicName := createNetworkInterface(ctx, *subnet.ID, *publicIP.ID, *nsgName.ID, subID, cred) 
-    fmt.Println("Network Interface created:", nicName.ID)
-
+    fmt.Println("Network Interface created:", *nicName.ID)
+    vm, err := createVirtualMachine(ctx, subID, cred, *nicName.ID)
+    if err != nil {
+        log.Fatalf("failed to create virtual machine: %v", err)
+    }
+    fmt.Println("New virtual machine created:", *vm.ID)
 
 }
