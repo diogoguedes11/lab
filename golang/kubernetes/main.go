@@ -52,11 +52,18 @@ func listPods(namespace *string,client *kubernetes.Clientset,ctx context.Context
 
 func deploy(client *kubernetes.Clientset, ctx context.Context,namespace *string) (map[string]string,error) {
 	var  deployment *v1.Deployment
-	appFile,err  := os.ReadFile("app.yaml")
+	raw,err  := os.ReadFile("app.yaml")
 	if err != nil {
-		fmt.Println("Error while reading the file")
+		return nil, fmt.Errorf("read deployment manifest: %w", err)
 	}
-	obj, groupVersionKid, err := scheme.Codecs.UniversalDeserializer().Decode(appFile,nil,nil)
+	if len(raw) == 0 {
+        return nil, fmt.Errorf("empty manifest")
+    }
+	obj, groupVersionKid, err := scheme.Codecs.UniversalDeserializer().Decode(raw,nil,nil)
+	
+	if err != nil {
+		return nil , fmt.Errorf("decode manifest: %w",err)
+	}
 	switch obj.(type) {
 		case *v1.Deployment:
 			deployment = obj.(*v1.Deployment)
@@ -71,16 +78,15 @@ func deploy(client *kubernetes.Clientset, ctx context.Context,namespace *string)
 		fmt.Print("Updating now...")
 		updateDeploymentResponse, err := client.AppsV1().Deployments(*namespace).Update(ctx,deployment, metav1.UpdateOptions{})
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			return nil, fmt.Errorf("update deployment error: %w", err)
 		}
-		fmt.Println("Updated.")
+		fmt.Printf("Updated deployment %s/%s\n", updateDeploymentResponse.Namespace, updateDeploymentResponse.Name)
 		return updateDeploymentResponse.Spec.Template.Labels, nil
 	}
 	deploymentResponse, err := client.AppsV1().Deployments(*namespace).Create(ctx,deployment, metav1.CreateOptions{})
 	if err != nil {
 		return nil,fmt.Errorf("Error while creating deployment %v",err)
 	}
-	fmt.Printf("deploy finished. Deploy with labels %v\n", deploymentResponse.Spec.Template.Labels)
 	return deploymentResponse.Spec.Template.Labels,nil  
 }	
 
@@ -97,7 +103,11 @@ func main() {
 	}
 	defer cancel()
 	listPods(namespace, client,ctx)
-	deploy(client,ctx,namespace)
-	
+	deploymentLabels, err := deploy(client, ctx, namespace)
+	if err != nil {
+		fmt.Printf("Error while deploying: %v\n", err)
+		return
+	}
+	fmt.Printf("deploy finished. Deploy with labels %v\n", deploymentLabels)
 
 }
