@@ -15,7 +15,7 @@ func generateKeys() ([]byte,[]byte,error) {
 	if err != nil {
 		return nil, nil, fmt.Errorf("generate key: %w", err)
 	}
-	derPrivate, err := x509.MarshalPKCS8PrivateKey(privateKey)
+	derPrivate := x509.MarshalPKCS1PrivateKey(privateKey)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error marshalling RSA private key: %s", err)
 		return nil, nil, fmt.Errorf("marshal private: %w", err)
