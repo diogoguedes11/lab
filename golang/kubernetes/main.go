@@ -32,7 +32,7 @@ func getClient(kubeconfig string, timeout time.Duration) (*kubernetes.Clientset,
     config.Timeout = timeout
     client, err := kubernetes.NewForConfig(config)
     if err != nil {
-        return nil, nil, nil, fmt.Errorf("new clientset: %w", err)
+        return nil, nil, nil, fmt.Errorf("new client: %w", err)
     }
     ctx, cancel := context.WithTimeout(context.Background(), timeout)
     return client, ctx, cancel, nil
@@ -64,11 +64,23 @@ func deploy(client *kubernetes.Clientset, ctx context.Context,namespace *string)
 			return nil, fmt.Errorf("Unrecognized type %s\n",groupVersionKid)
 
 	}
+	_ , err = client.AppsV1().Deployments(*namespace).Get(ctx,deployment.Name, metav1.GetOptions{})
+
+	if  err == nil {
+		fmt.Printf("Deployment %s already exists in namespace %s\n", deployment.Name, *namespace)
+		fmt.Print("Updating now...")
+		updateDeploymentResponse, err := client.AppsV1().Deployments(*namespace).Update(ctx,deployment, metav1.UpdateOptions{})
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+		}
+		fmt.Println("Updated.")
+		return updateDeploymentResponse.Spec.Template.Labels, nil
+	}
 	deploymentResponse, err := client.AppsV1().Deployments(*namespace).Create(ctx,deployment, metav1.CreateOptions{})
 	if err != nil {
 		return nil,fmt.Errorf("Error while creating deployment %v",err)
 	}
-	fmt.Println("deploy finished. Deploy with labels %v",deploymentResponse.Spec.Template.Labels)
+	fmt.Printf("deploy finished. Deploy with labels %v\n", deploymentResponse.Spec.Template.Labels)
 	return deploymentResponse.Spec.Template.Labels,nil  
 }	
 
@@ -84,7 +96,7 @@ func main() {
 		panic(err)
 	}
 	defer cancel()
-	// listPods(namespace, client,ctx)
+	listPods(namespace, client,ctx)
 	deploy(client,ctx,namespace)
 	
 
