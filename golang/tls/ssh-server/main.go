@@ -83,34 +83,54 @@ func startServer() error {
 	}
 }
 
-func handleRequest(channel ssh.Channel, requests <-chan *ssh.Request, wg sync.WaitGroup) {
-	defer channel.Close()
-	go func(in <-chan *ssh.Request) {
-			for req := range in {
-				ok := false
-				switch req.Type{
-				case "pty-req":
-					ok = true
-				case "shell":
-					ok = true
+func createTerminal(channel ssh.Channel) {
+	term := terminal.NewTerminal(channel, "$ ")
+			for {
+				line, err := term.ReadLine()
+				if err != nil {
+					break
 				}
-				req.Reply(ok, nil)
+				if line == "exit" {
+					term.Write([]byte("Goodbye!\r\n"))
+					channel.Close()
+					return
+				}
+				term.Write([]byte(fmt.Sprintf("You typed: %s\n", line)))
 			}
-			wg.Done()
-		}(requests)
+}
 
-		term := terminal.NewTerminal(channel, "$ ")
-		for {
-			line, err := term.ReadLine()
-			if err != nil {
-				break
+func handleRequest(channel ssh.Channel, requests <-chan *ssh.Request, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer channel.Close()
+	
+	var terminalCreated bool
+	
+	for req := range requests {
+		ok := false
+		switch req.Type {
+		case "pty-req":
+			ok = true
+			req.Reply(ok, nil)
+		case "env":
+			ok = true
+			req.Reply(ok, nil)
+		case "shell":
+			ok = true
+			req.Reply(ok, nil)
+			if !terminalCreated {
+				terminalCreated = true
+				go createTerminal(channel)
 			}
-			if line == "exit" {
-				term.Write([]byte("Goodbye!\r\n"))
-				return
-			}
-			term.Write([]byte(fmt.Sprintf("You typed: %s\n", line)))
+		case "exec":
+			ok = true
+			channel.Write([]byte("Executing command: " + string(req.Payload)))
+			channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
+			req.Reply(ok, nil)
+			channel.Close()
+		default:
+			req.Reply(ok, nil)
 		}
+	}
 }
 
 func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
@@ -146,7 +166,8 @@ func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 		if err != nil {
 			log.Fatalf("Could not accept channel: %v", err)
 		}
-		handleRequest(channel, requests,wg)
+		wg.Add(1)
+		go handleRequest(channel, requests, &wg)
 	}
 }
 
