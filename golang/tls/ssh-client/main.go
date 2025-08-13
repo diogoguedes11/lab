@@ -40,6 +40,7 @@ func createClientConfig() (*ssh.ClientConfig, error) {
     return config, nil
 }
 
+
 func runCommand(config *ssh.ClientConfig, command string) error {
     // Create connection
     client, err := ssh.Dial("tcp", "localhost:2222", config)

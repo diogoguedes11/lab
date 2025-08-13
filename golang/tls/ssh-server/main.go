@@ -134,6 +134,7 @@ func handleRequest(channel ssh.Channel, requests <-chan *ssh.Request, wg *sync.W
 	}
 }
 
+
 func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 	defer conn.Close()
 	fmt.Printf("New connection from %s\n", conn.RemoteAddr())
