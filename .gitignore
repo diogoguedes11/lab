@@ -14,3 +14,5 @@ go.sum
 go.mod
 .vagrant*
 .terragrunt
+mykey.pem
+mykey.pub
