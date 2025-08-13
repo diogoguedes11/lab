@@ -16,3 +16,5 @@ go.mod
 .terragrunt
 mykey.pem
 mykey.pub
+id_rsa
+id_rsa.pub
