@@ -12,7 +12,7 @@ import (
 )
 
 func startServer() error {
-	authorizedKeysBytes, err := os.ReadFile("mykey.pub") // authorized keys
+	authorizedKeysBytes, err := os.ReadFile("mykey.pub") 
 	if err != nil {
 			log.Fatalf("Failed to load authorized_keys, err: %v", err)
 	}
@@ -116,11 +116,12 @@ func handleRequest(channel ssh.Channel, requests <-chan *ssh.Request, wg *sync.W
 			req.Reply(ok, nil)
 		case "shell":
 			ok = true
-			req.Reply(ok, nil)
 			if !terminalCreated {
 				terminalCreated = true
 				go createTerminal(channel)
 			}
+			channel.SendRequest("exit-status", false, []byte{0, 0, 0, 0})
+			req.Reply(ok, nil)
 		case "exec":
 			ok = true
 			channel.Write([]byte("Executing command: " + string(req.Payload)))
