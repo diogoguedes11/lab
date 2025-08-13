@@ -83,6 +83,35 @@ func startServer() error {
 	}
 }
 
+func handleRequest(channel ssh.Channel, requests <-chan *ssh.Request, wg sync.WaitGroup) {
+	defer channel.Close()
+	go func(in <-chan *ssh.Request) {
+			for req := range in {
+				ok := false
+				switch req.Type{
+				case "pty-req":
+					ok = true
+				case "shell":
+					ok = true
+				}
+				req.Reply(ok, nil)
+			}
+			wg.Done()
+		}(requests)
+
+		term := terminal.NewTerminal(channel, "$ ")
+		for {
+			line, err := term.ReadLine()
+			if err != nil {
+				break
+			}
+			if line == "exit" {
+				term.Write([]byte("Goodbye!\r\n"))
+				return
+			}
+			term.Write([]byte(fmt.Sprintf("You typed: %s\n", line)))
+		}
+}
 
 func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 	defer conn.Close()
@@ -96,8 +125,6 @@ func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
     	defer sshConn.Close()
 	fmt.Printf("SSH connection established from %s\n", sshConn.RemoteAddr())
 	
-	go ssh.DiscardRequests(reqs) 
-
 	var wg sync.WaitGroup
 	defer wg.Wait()
 	// The incoming Request channel must be serviced.
@@ -119,39 +146,8 @@ func handleConnection(conn net.Conn, config *ssh.ServerConfig) {
 		if err != nil {
 			log.Fatalf("Could not accept channel: %v", err)
 		}
-
-		// Sessions have out-of-band requests such as "shell",
-		// "pty-req" and "env".  Here we handle only the
-		// "shell" request.
-		wg.Add(1)
-		go func(in <-chan *ssh.Request) {
-			for req := range in {
-				ok := false
-				switch req.Type{
-				case "pty-req":
-					ok = true
-				case "shell":
-					ok = true
-				}
-				req.Reply(ok, nil)
-			}
-			wg.Done()
-		}(requests)
-
-		term := terminal.NewTerminal(channel, "$ ")
-		for {
-			line, err := term.ReadLine()
-			if err != nil {
-				break
-			}
-			if line == "exit" {
-				break
-			}
-			// TODO: Execute 'line' as shell command and write output back
-			term.Write([]byte(fmt.Sprintf("You typed: %s\n", line)))
-		}
+		handleRequest(channel, requests,wg)
 	}
-
 }
 
 
