@@ -19,4 +19,4 @@ REGION = os.getenv("VERTEX_REGION")
 
 vertexai.init(project=PROJECT_ID, location=REGION, credentials=credentials)
 
-print(f"Vertex AI initialized with project: {PROJECT_ID}, region: {REGION}")
+print(f"Vertex AI initialized")
