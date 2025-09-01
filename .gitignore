@@ -18,3 +18,5 @@ mykey.pem
 mykey.pub
 id_rsa
 id_rsa.pub
+gcp-network-452116-7c78a1eff948.json
+.env
