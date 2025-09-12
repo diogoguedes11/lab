@@ -14,7 +14,6 @@
 # In[6]:
 
 
-import vertexai_start
 import pandas as pd
 import os
 
