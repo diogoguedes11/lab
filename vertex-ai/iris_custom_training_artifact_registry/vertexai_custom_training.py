@@ -14,9 +14,11 @@
 # In[6]:
 
 
-import vertexai_start
 import pandas as pd
 import os
+
+# Note: vertexai_start import removed as it's not needed in containerized training
+# The training script runs independently without Vertex AI SDK initialization
 
 
 # In[4]:
@@ -95,24 +97,26 @@ accuracy_score(y_test,predictions)
 
 
 # Dump model file
+import pickle
+import logging
 
-# import pickle
-# import logging
+with open("model.pkl",'wb') as model_f:
+     pickle.dump(svn,model_f) 
 
-# with open("model.pkl",'wb') as model_f:
-#      pickle.dump(svn,model_f) 
+print("Model saved to model.pkl")
 
-
-# In[42]:
-
-
-# Upload model to bucket (Commented for now)
-# from google.cloud import storage
-# bucket_name = "vertexai-storage11"
-# model_name = "model.pkl"
-# storage_client = storage.Client()
-# storage_bucket = storage_client.bucket(bucket_name=bucket_name)
-# storage_bucket.blob(model_name).upload_from_filename(model_name)
+# Upload model to bucket (if storage credentials are available)
+try:
+    from google.cloud import storage
+    bucket_name = "vertexai-storage11"
+    model_name = "model.pkl"
+    storage_client = storage.Client()
+    storage_bucket = storage_client.bucket(bucket_name=bucket_name)
+    storage_bucket.blob(model_name).upload_from_filename(model_name)
+    print(f"Model uploaded to gs://{bucket_name}/{model_name}")
+except Exception as e:
+    print(f"Model upload failed: {e}")
+    print("Model saved locally only")
 
 
 # ### Convert jupyter notebook to python script
