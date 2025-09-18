@@ -1,6 +1,7 @@
 # This program allows us to run local LLMs on our machine (offline)
 from gpt4all import GPT4All
-model = GPT4All("orca-mini-3b-gguf2-q4_0.gguf") # open source model (size: 1.98GB)
+model = GPT4All("orca-mini-3b-gguf2-q4_0.gguf") # open source model (size: 1.98GB) 
+# the model in Linux will be downloaded under ~/.cache/gpt4all/models
 
 session_enabled = True
 while session_enabled:
