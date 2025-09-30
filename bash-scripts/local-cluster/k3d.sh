@@ -16,6 +16,5 @@ kubectl create namespace argocd
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 OUTPUT=$(kubectl get secret argocd-initial-admin-secret -n argocd -o jsonpath="{.data.password}" | base64 -d)
 echo "ArgoCD initial admin password: $OUTPUT"
-
-# kubectl port-forward svc/argocd-server 8080:80 -n argocd
-# argocd login localhost:8081 --username admin --password $OUTPUT --insecure
+kubectl port-forward svc/argocd-server 8080:80 -n argocd & # background argocd-server
+argocd login localhost:8081 --username admin --password $OUTPUT --insecure

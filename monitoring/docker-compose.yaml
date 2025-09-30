@@ -1,0 +1,27 @@
+networks:
+  prometheus:
+    driver: bridge
+    name: prometheus
+services:
+  python-application:
+    build:
+      context: ./python-application
+      dockerfile: Dockerfile
+    container_name: python-application
+    ports:
+      - "81:5000"
+    networks:
+      - prometheus
+    restart: always
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    networks:
+      - prometheus
+    restart: always
