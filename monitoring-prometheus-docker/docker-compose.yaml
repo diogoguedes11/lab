@@ -3,6 +3,16 @@ networks:
     driver: bridge
     name: prometheus
 services:
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - prometheus
+    restart: always
   python-application:
     build:
       context: ./python-application
@@ -22,6 +32,8 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana.yml:/etc/grafana/provisioning/datasources/datasources.yml
     networks:
       - prometheus
     restart: always
