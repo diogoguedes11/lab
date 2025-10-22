@@ -11,6 +11,11 @@ app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
 })
 
 
+@app.get("/")
+def root():
+    return "Welcome to the Car API"
+
+
 @app.get("/cars")
 def get_cars():
     REQUESTS.inc()
@@ -43,4 +48,4 @@ def delete_cars():
 
 if __name__ == '__main__':
     start_http_server(8000)
-    app.run(port='3000')
+    app.run(host="0.0.0.0", port=3000)
