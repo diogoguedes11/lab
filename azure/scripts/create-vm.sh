@@ -43,18 +43,3 @@ for i in 1 2; do
          exit 1
       fi
    done
-   upgrade az cli
-   
-   To upgrade the Azure CLI on your system, run:
-   
-   If you are on WSL or Linux and need a manual upgrade, use:
-   
-   This will ensure you have the latest Azure CLI version.
-   
-   dard_DS1_v2' in a future release.
-   The command failed with an unexpected error. Here is the traceback:
-   The content for this response was already consumed
-   Traceback (most recent call last):
-   File "/opt/az/lib/python3.13/site-packages/azure/cli/core/commands/init.py", line 703, in _run_job
-   result = cmd_copy(params)
-   
