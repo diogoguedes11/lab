@@ -19,7 +19,7 @@ az group create \
    --name "$RESOURCE_GROUP_NAME" \
    --location "eastus"
 
-# Check if the resource group creation was successful
+# Check if the resource group creation was unsuccessful
 if [ $? -ne 0 ]; then
     echo "Error: Failed to create resource group"
     exit 1
@@ -37,7 +37,7 @@ for i in 1 2; do
          --size "Standard_D2s_v3" \
          --generate-ssh-keys
    
-      # Check if the VM creation was successful
+      # Check if the VM creation was unsuccessful
       if [ $? -ne 0 ]; then
          echo "Error: Failed to create VM my-test-vm-$i"
          exit 1
