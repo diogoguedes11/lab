@@ -2,16 +2,16 @@
 
 RESOURCE_GROUP_NAME="$1"
 PASSWORD="$2"
-
+NUM_VMS="$3"
 
 # Set the resource group name (Ensure this variable is set correctly in your environment or script)
 if [ -z "$RESOURCE_GROUP_NAME" ]; then
-    echo "Usage: $0 <resource-group-name> <password>"
+    echo "Usage: $0 <resource-group-name> <password> <num-vms>"
     exit 1
 fi
 
 if [ -z "$PASSWORD" ]; then
-    echo "Usage: $0 <resource-group-name> <password>"
+    echo "Usage: $0 <resource-group-name> <password> <num-vms>"
     exit 1
 fi
 
@@ -27,12 +27,12 @@ fi
 
 # Create two virtual machines
 
-for i in 1 2; do
+for i in $(seq 1 $NUM_VMS); do
       az vm create \
          --resource-group "$RESOURCE_GROUP_NAME" \
          --name "my-test-vm-$i" \
          --image "Ubuntu2404" \
-         --admin-username "admin" \
+         --admin-username "azureuser" \
          --admin-password "$PASSWORD" \
          --size "Standard_D2s_v3" \
          --generate-ssh-keys
