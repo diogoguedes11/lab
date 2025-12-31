@@ -2,13 +2,12 @@ package main
 
 import "fmt"
 
-
 func main() {
-	a:= "string"
+	a := "string"
 	testPointer(&a)
-	fmt.Printf("a: %s\n",a)
+	fmt.Printf("a: %s\n", a)
 }
 
-func testPointer(a *string) {
+func testPointer(a *string) { // changes the output of the value using a function with a pointer
 	*a = "another string"
 }
