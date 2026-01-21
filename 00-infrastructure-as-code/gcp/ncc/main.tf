@@ -2,9 +2,65 @@ resource "google_network_connectivity_hub" "hub" {
   name        = "star"
   description = "A sample star hub"
   labels = {
-    label-one = "value-one"
+    hub = "star"
   }
   preset_topology = "STAR"
+}
+
+# =================== HUB Configurations ==============================
+resource "google_compute_network" "vpc_hub" {
+  name                    = "vpc-hub"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "vpc_subnet" {
+  name          = "sb-hub"
+  network       = google_compute_network.vpc_hub.name
+  ip_cidr_range = "10.0.3.0/24"
+  depends_on    = [google_compute_network.vpc_hub]
+}
+# ============= END HUB CONFIGURATIONS ============================= 
+# ============= Cloud Nat ============================= 
+
+resource "google_compute_router" "router" {
+  name    = "router01"
+  region  = var.region
+  network = google_compute_network.vpc_hub.name
+
+  bgp {
+    asn = 64514
+  }
+}
+
+resource "google_compute_router_nat" "cn_router" {
+  name                               = "cn-router"
+  router                             = google_compute_router.router.name
+  region                             = var.region
+  nat_ip_allocate_option             = "AUTO_ONLY"
+  source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
+
+  log_config {
+    enable = true
+    filter = "ERRORS_ONLY"
+  }
+}
+# ================= END Cloud NAT ===================================
+
+resource "google_compute_instance" "hub_vm" {
+  name           = "hub-vm"
+  machine_type   = "e2-micro"
+  zone           = "${var.region}-b"
+  can_ip_forward = true
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+    }
+  }
+  network_interface {
+    network    = google_compute_network.vpc_hub.name
+    subnetwork = google_compute_subnetwork.subnet_spoke1.name
+  }
+
 }
 
 # Spoke1
@@ -61,3 +117,121 @@ resource "google_network_connectivity_spoke" "spoke2" {
   }
   group = google_network_connectivity_group.ncc_group.id
 }
+
+# ========= VMS AND FIREWALLS FOR TESTING ==========
+
+# resource "google_compute_instance" "linux_vm_spoke1" {
+#   name         = "linux-vm-spoke1"
+#   machine_type = "e2-micro"
+#   network_interface {
+#     network    = google_compute_network.vpc_spoke1.name
+#     subnetwork = google_compute_subnetwork.subnet_spoke1.name
+#   }
+#   zone = "${var.region}-a"
+#   boot_disk {
+#     initialize_params {
+#       image = "ubuntu-os-cloud/ubuntu-2204-lts"
+#       labels = {
+#         spoke = "spoke1"
+#       }
+#     }
+#   }
+# }
+
+# resource "google_compute_firewall" "allow_ssh_iap_spoke1" {
+#   name    = "allow-ssh-via-iap"
+#   network = google_compute_network.vpc_spoke1.self_link
+
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
+
+#   source_ranges = ["35.235.240.0/20"]
+# }
+
+# resource "google_compute_firewall" "allow_icmp_spoke1" {
+#   name    = "allow-icmp-spoke1"
+#   network = google_compute_network.vpc_spoke1.self_link
+
+#   allow {
+#     protocol = "icmp"
+#   }
+
+#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24"]
+# }
+
+# resource "google_compute_firewall" "allow_internal_spoke1" {
+#   name    = "allow-internal-spoke1"
+#   network = google_compute_network.vpc_spoke1.self_link
+
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["0-65535"]
+#   }
+
+#   allow {
+#     protocol = "udp"
+#     ports    = ["0-65535"]
+#   }
+
+#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24"]
+# }
+
+# resource "google_compute_firewall" "allow_ssh_iap_spoke2" {
+#   name    = "allow-ssh-via-iap-spoke2"
+#   network = google_compute_network.vpc_spoke2.self_link
+
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["22"]
+#   }
+
+#   source_ranges = ["35.235.240.0/20"]
+# }
+
+# resource "google_compute_firewall" "allow_icmp_spoke2" {
+#   name    = "allow-icmp-spoke2"
+#   network = google_compute_network.vpc_spoke2.self_link
+
+#   allow {
+#     protocol = "icmp"
+#   }
+
+#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24"]
+# }
+
+# resource "google_compute_firewall" "allow_internal_spoke2" {
+#   name    = "allow-internal-spoke2"
+#   network = google_compute_network.vpc_spoke2.self_link
+
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["0-65535"]
+#   }
+
+#   allow {
+#     protocol = "udp"
+#     ports    = ["0-65535"]
+#   }
+
+#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24"]
+# }
+
+# resource "google_compute_instance" "linux_vm_spoke2" {
+#   name         = "linux-vm-spoke2"
+#   machine_type = "e2-micro"
+#   network_interface {
+#     network    = google_compute_network.vpc_spoke2.name
+#     subnetwork = google_compute_subnetwork.subnet_spoke2.name
+#   }
+#   zone = "${var.region}-a"
+#   boot_disk {
+#     initialize_params {
+#       image = "ubuntu-os-cloud/ubuntu-2204-lts"
+#       labels = {
+#         spoke = "spoke2"
+#       }
+#     }
+#   }
+# }
