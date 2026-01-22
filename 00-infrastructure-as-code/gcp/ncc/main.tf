@@ -286,21 +286,58 @@ resource "google_compute_instance" "linux_vm_spoke2" {
 }
 
 
+
+# =========================== Internal load balancer ====================
+
+# 1. Health Check
+resource "google_compute_region_health_check" "default" {
+  name = "check-backend"
+  tcp_health_check { port = "80" }
+}
+resource "google_compute_instance_group" "my_group" {
+  name      = "nva-group"
+  zone      = "${var.region}-a"
+  instances = [google_compute_instance.hub_vm.self_link]
+}
+
+# 2. Backend Service
+resource "google_compute_region_backend_service" "default" {
+  name                  = "backend-service"
+  region                = var.region
+  protocol              = "TCP"
+  load_balancing_scheme = "INTERNAL"
+  health_checks         = [google_compute_region_health_check.default.id]
+
+  backend {
+    group          = google_compute_instance_group.my_group.id
+    balancing_mode = "CONNECTION"
+  }
+}
+
+# 3. Forwarding Rule (O IP do Load Balancer)
+resource "google_compute_forwarding_rule" "default" {
+  name                  = "l4-ilb-forwarding-rule"
+  region                = "europe-west1"
+  ip_protocol           = "TCP"
+  load_balancing_scheme = "INTERNAL"
+  all_ports             = true
+  allow_global_access   = true
+  backend_service       = google_compute_region_backend_service.default.id
+  network               = google_compute_network.vpc_hub.self_link
+  subnetwork            = google_compute_subnetwork.vpc_subnet_hub.self_link
+}
+
+
+
+
 # ====================== ROUTES ======================
 
 resource "google_compute_route" "from_spoke1_to_internet" {
-  name              = "route-spoke1-to-internet"
-  network           = google_compute_network.vpc_spoke1.self_link
-  dest_range        = "0.0.0.0/0"
-  next_hop_instance = google_compute_instance.hub_vm.self_link
-  priority          = 10
+  name       = "route-spoke1-to-internet"
+  dest_range = "0.0.0.0/0"
+  network    = google_compute_network.vpc_spoke1.self_link
+  priority   = 100
 
-}
+  next_hop_ilb = google_compute_forwarding_rule.default.self_link
 
-resource "google_compute_route" "from_spoke2_to_internet" {
-  name              = "route-spoke2-to-internet"
-  network           = google_compute_network.vpc_spoke2.self_link
-  dest_range        = "0.0.0.0/0"
-  next_hop_instance = google_compute_instance.hub_vm.self_link
-  priority          = 10
 }
