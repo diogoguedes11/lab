@@ -97,6 +97,21 @@ resource "google_compute_instance" "hub_vm" {
   machine_type   = "e2-micro"
   zone           = "${var.region}-a"
   can_ip_forward = true
+
+  metadata_startup_script = <<-EOF
+    #!/bin/bash
+    echo 1 > /proc/sys/net/ipv4/ip_forward
+    echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+    sysctl -p
+    
+    # Configure iptables MASQUERADE for NAT
+    iptables -t nat -A POSTROUTING -o ens4 -j MASQUERADE
+    
+    # Make iptables rules persistent
+    apt-get update
+    DEBIAN_FRONTEND=noninteractive apt-get install -y iptables-persistent
+  EOF
+
   boot_disk {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2204-lts"
@@ -173,6 +188,7 @@ resource "google_network_connectivity_spoke" "spoke2" {
 resource "google_compute_instance" "linux_vm_spoke1" {
   name         = "linux-vm-spoke1"
   machine_type = "e2-micro"
+  tags         = ["use-nva"]
   network_interface {
     network    = google_compute_network.vpc_spoke1.name
     subnetwork = google_compute_subnetwork.subnet_spoke1.name
@@ -285,22 +301,21 @@ resource "google_compute_instance" "linux_vm_spoke2" {
   }
 }
 
+# =========================== Internal Load Balancer ====================
 
-
-# =========================== Internal load balancer ====================
-
-# 1. Health Check
 resource "google_compute_region_health_check" "default" {
   name = "check-backend"
-  tcp_health_check { port = "80" }
+  tcp_health_check {
+    port = "80"
+  }
 }
-resource "google_compute_instance_group" "my_group" {
+
+resource "google_compute_instance_group" "nva_group" {
   name      = "nva-group"
   zone      = "${var.region}-a"
   instances = [google_compute_instance.hub_vm.self_link]
 }
 
-# 2. Backend Service
 resource "google_compute_region_backend_service" "default" {
   name                  = "backend-service"
   region                = var.region
@@ -309,15 +324,14 @@ resource "google_compute_region_backend_service" "default" {
   health_checks         = [google_compute_region_health_check.default.id]
 
   backend {
-    group          = google_compute_instance_group.my_group.id
+    group          = google_compute_instance_group.nva_group.id
     balancing_mode = "CONNECTION"
   }
 }
 
-# 3. Forwarding Rule (O IP do Load Balancer)
-resource "google_compute_forwarding_rule" "default" {
+resource "google_compute_forwarding_rule" "ilb" {
   name                  = "l4-ilb-forwarding-rule"
-  region                = "europe-west1"
+  region                = var.region
   ip_protocol           = "TCP"
   load_balancing_scheme = "INTERNAL"
   all_ports             = true
@@ -327,17 +341,14 @@ resource "google_compute_forwarding_rule" "default" {
   subnetwork            = google_compute_subnetwork.vpc_subnet_hub.self_link
 }
 
-
-
-
 # ====================== ROUTES ======================
 
 resource "google_compute_route" "from_spoke1_to_internet" {
-  name       = "route-spoke1-to-internet"
-  dest_range = "0.0.0.0/0"
-  network    = google_compute_network.vpc_spoke1.self_link
-  priority   = 100
-
-  next_hop_ilb = google_compute_forwarding_rule.default.self_link
-
+  name                   = "route-spoke1-to-internet"
+  dest_range             = "0.0.0.0/0"
+  network                = google_compute_network.vpc_spoke1.self_link
+  priority               = 100
+  tags                   = ["use-nva"]
+  next_hop_instance      = google_compute_instance.hub_vm.self_link
+  next_hop_instance_zone = "${var.region}-a"
 }
