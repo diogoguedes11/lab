@@ -301,46 +301,6 @@ resource "google_compute_instance" "linux_vm_spoke2" {
   }
 }
 
-# =========================== Internal Load Balancer ====================
-
-resource "google_compute_region_health_check" "default" {
-  name = "check-backend"
-  tcp_health_check {
-    port = "80"
-  }
-}
-
-resource "google_compute_instance_group" "nva_group" {
-  name      = "nva-group"
-  zone      = "${var.region}-a"
-  instances = [google_compute_instance.hub_vm.self_link]
-}
-
-resource "google_compute_region_backend_service" "default" {
-  name                  = "backend-service"
-  region                = var.region
-  protocol              = "TCP"
-  load_balancing_scheme = "INTERNAL"
-  health_checks         = [google_compute_region_health_check.default.id]
-
-  backend {
-    group          = google_compute_instance_group.nva_group.id
-    balancing_mode = "CONNECTION"
-  }
-}
-
-resource "google_compute_forwarding_rule" "ilb" {
-  name                  = "l4-ilb-forwarding-rule"
-  region                = var.region
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "INTERNAL"
-  all_ports             = true
-  allow_global_access   = true
-  backend_service       = google_compute_region_backend_service.default.id
-  network               = google_compute_network.vpc_hub.self_link
-  subnetwork            = google_compute_subnetwork.vpc_subnet_hub.self_link
-}
-
 # ====================== ROUTES ======================
 
 resource "google_compute_route" "from_spoke1_to_internet" {
