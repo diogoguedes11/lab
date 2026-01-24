@@ -12,7 +12,6 @@ provider "google" {
   project = var.project_id
   region  = "europe-west1"
 }
-# Node01 
 resource "google_compute_network" "vpc_node01" {
   name                    = "vpc-node01"
   auto_create_subnetworks = false
@@ -44,6 +43,19 @@ resource "google_compute_instance" "linux_vm_node01" {
   machine_type = "e2-micro"
   tags         = ["use-nva"]
 
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    apt-get update -y
+    # add GPG key
+    curl -s https://deb.frrouting.org/frr/keys.gpg | sudo tee /usr/share/keyrings/frrouting.gpg > /dev/null
+    FRRVER="frr-stable"
+    echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr \
+        $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
+    # update and install FRR
+    sudo apt update -y && sudo apt install -y frr frr-pythontools
+    sed -i 's/^\(bgpd=no\)/\1\nbgpd=yes/' /etc/frr/daemons
+    systemctl restart frr
+  EOT
   network_interface {
     access_config {}
     network    = google_compute_network.vpc_node01.name
@@ -121,7 +133,6 @@ resource "google_compute_firewall" "allow_icmp_node02" {
     protocol = "icmp"
   }
 
-  source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
 }
 
 resource "google_compute_firewall" "allow_internal_node02" {
@@ -138,12 +149,24 @@ resource "google_compute_firewall" "allow_internal_node02" {
     ports    = ["0-65535"]
   }
 
-  source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
 }
 
 resource "google_compute_instance" "linux_vm_node02" {
-  name         = "linux-vm-node02"
-  machine_type = "e2-micro"
+  name                    = "linux-vm-node02"
+  machine_type            = "e2-micro"
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    apt-get update -y
+    # add GPG key
+    curl -s https://deb.frrouting.org/frr/keys.gpg | sudo tee /usr/share/keyrings/frrouting.gpg > /dev/null
+    FRRVER="frr-stable"
+    echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr \
+        $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
+    # update and install FRR
+    sudo apt update -y && sudo apt install -y frr frr-pythontools
+    sed -i 's/^\(bgpd=no\)/\1\nbgpd=yes/' /etc/frr/daemons
+    systemctl restart frr
+  EOT
   network_interface {
     access_config {
     }
