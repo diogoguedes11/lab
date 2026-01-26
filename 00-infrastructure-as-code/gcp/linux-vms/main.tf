@@ -12,7 +12,6 @@ provider "google" {
   project = var.project_id
   region  = "europe-west1"
 }
-# Node01 
 resource "google_compute_network" "vpc_node01" {
   name                    = "vpc-node01"
   auto_create_subnetworks = false
@@ -39,73 +38,80 @@ resource "google_compute_subnetwork" "subnet_node02" {
 }
 # ========= VMS AND FIREWALLS FOR TESTING ==========
 
-# resource "google_compute_instance" "linux_vm_node01" {
-#   name         = "linux-vm-node01"
-#   machine_type = "e2-micro"
-#   tags         = ["use-nva"]
+resource "google_compute_instance" "linux_vm_node01" {
+  name         = "linux-vm-node01"
+  machine_type = "e2-micro"
+  tags         = ["use-nva"]
 
-#   metadata_startup_script = <<-EOT
-#     sudo apt-get update -y
-#     sudo apt-get install nginx
-#     sudo systemctl start nginx
-#     sudo systemctl enable nginx
-#   EOT 
-#   network_interface {
-#     # access_config {}
-#     network    = google_compute_network.vpc_node01.name
-#     subnetwork = google_compute_subnetwork.subnet_node01.name
-#   }
-#   zone = "${var.region}-a"
-#   boot_disk {
-#     initialize_params {
-#       image = "ubuntu-os-cloud/ubuntu-2204-lts"
-#       labels = {
-#         node = "node01"
-#       }
-#     }
-#   }
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    apt-get update -y
+    # add GPG key
+    curl -s https://deb.frrouting.org/frr/keys.gpg | sudo tee /usr/share/keyrings/frrouting.gpg > /dev/null
+    FRRVER="frr-stable"
+    echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr \
+        $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
+    # update and install FRR
+    sudo apt update -y && sudo apt install -y frr frr-pythontools
+    sed -i 's/^\(bgpd=no\)/\1\nbgpd=yes/' /etc/frr/daemons
+    systemctl restart frr
+  EOT
+  network_interface {
+    access_config {}
+    network    = google_compute_network.vpc_node01.name
+    subnetwork = google_compute_subnetwork.subnet_node01.name
+  }
+  zone = "${var.region}-a"
+  boot_disk {
+    initialize_params {
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
+      labels = {
+        node = "node01"
+      }
+    }
+  }
 
-#   depends_on = [google_compute_subnetwork.subnet_node01]
-# }
+  depends_on = [google_compute_subnetwork.subnet_node01]
+}
 
-# resource "google_compute_firewall" "allow_ssh_iap_node01" {
-#   name    = "allow-ssh-via-iap"
-#   network = google_compute_network.vpc_node01.self_link
+resource "google_compute_firewall" "allow_ssh_iap_node01" {
+  name    = "allow-ssh-via-iap"
+  network = google_compute_network.vpc_node01.self_link
 
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["22"]
-#   }
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
 
-#   source_ranges = ["35.235.240.0/20"]
-# }
+  source_ranges = ["35.235.240.0/20"]
+}
 
-# resource "google_compute_firewall" "allow_icmp_node01" {
-#   name    = "allow-icmp-node01"
-#   network = google_compute_network.vpc_node01.self_link
+resource "google_compute_firewall" "allow_icmp_node01" {
+  name    = "allow-icmp-node01"
+  network = google_compute_network.vpc_node01.self_link
 
-#   allow {
-#     protocol = "icmp"
-#   }
+  allow {
+    protocol = "icmp"
+  }
 
-#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
-# }
+  source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
+}
 
-# resource "google_compute_firewall" "allow_internal_node01" {
-#   name    = "allow-internal-node01"
-#   network = google_compute_network.vpc_node01.self_link
+resource "google_compute_firewall" "allow_internal_node01" {
+  name    = "allow-internal-node01"
+  network = google_compute_network.vpc_node01.self_link
 
-#   allow {
-#     protocol = "tcp"
-#     ports    = ["0-65535"]
-#   }
+  allow {
+    protocol = "tcp"
+    ports    = ["0-65535"]
+  }
 
-#   allow {
-#     protocol = "udp"
-#     ports    = ["0-65535"]
-#   }
-#   source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
-# }
+  allow {
+    protocol = "udp"
+    ports    = ["0-65535"]
+  }
+  source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
+}
 
 resource "google_compute_firewall" "allow_ssh_iap_node02" {
   name    = "allow-ssh-via-iap-node02"
@@ -127,7 +133,6 @@ resource "google_compute_firewall" "allow_icmp_node02" {
     protocol = "icmp"
   }
 
-  source_ranges = ["0.0.0.0/0"]
 }
 
 resource "google_compute_firewall" "allow_internal_node02" {
@@ -144,14 +149,27 @@ resource "google_compute_firewall" "allow_internal_node02" {
     ports    = ["0-65535"]
   }
 
-  source_ranges = ["0.0.0.0/0"]
 }
 
 resource "google_compute_instance" "linux_vm_node02" {
-  name         = "linux-vm-node02"
-  machine_type = "e2-micro"
+  name                    = "linux-vm-node02"
+  machine_type            = "e2-micro"
+  metadata_startup_script = <<-EOT
+    #!/bin/bash
+    apt-get update -y
+    # add GPG key
+    curl -s https://deb.frrouting.org/frr/keys.gpg | sudo tee /usr/share/keyrings/frrouting.gpg > /dev/null
+    FRRVER="frr-stable"
+    echo deb '[signed-by=/usr/share/keyrings/frrouting.gpg]' https://deb.frrouting.org/frr \
+        $(lsb_release -s -c) $FRRVER | sudo tee -a /etc/apt/sources.list.d/frr.list
+    # update and install FRR
+    sudo apt update -y && sudo apt install -y frr frr-pythontools
+    sed -i 's/^\(bgpd=no\)/\1\nbgpd=yes/' /etc/frr/daemons
+    systemctl restart frr
+  EOT
   network_interface {
-    # access_config {}
+    access_config {
+    }
     network    = google_compute_network.vpc_node02.name
     subnetwork = google_compute_subnetwork.subnet_node02.name
   }
@@ -168,102 +186,3 @@ resource "google_compute_instance" "linux_vm_node02" {
   depends_on = [google_compute_subnetwork.subnet_node02]
 }
 
-
-# LOAD BALANCER
-
-
-
-resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "l4-ilb-forwarding-rule"
-  backend_service       = google_compute_region_backend_service.default.id
-  region                = var.region
-  ip_protocol           = "TCP"
-  load_balancing_scheme = "INTERNAL"
-  all_ports             = true
-  allow_global_access   = true
-  network               = google_compute_network.vpc_node01.id
-  subnetwork            = google_compute_subnetwork.subnet_node01.id
-}
-
-resource "google_compute_region_backend_service" "default" {
-  name                  = "l4-ilb-backend-subnet"
-  region                = var.region
-  protocol              = "TCP"
-  load_balancing_scheme = "INTERNAL"
-  health_checks         = [google_compute_region_health_check.default.id]
-  backend {
-    group          = google_compute_region_instance_group_manager.mig.instance_group
-    balancing_mode = "CONNECTION"
-  }
-}
-
-resource "google_compute_instance_template" "instance_template" {
-  name         = "l4-ilb-mig-template"
-  machine_type = "e2-small"
-  tags         = ["allow-ssh", "allow-health-check"]
-
-  network_interface {
-    network    = google_compute_network.vpc_node01.id
-    subnetwork = google_compute_subnetwork.subnet_node01.id
-    # access_config {
-    #   # add external ip to fetch packages
-    # }
-  }
-  disk {
-    source_image = "ubuntu-os-cloud/ubuntu-2204-lts"
-    auto_delete  = true
-    boot         = true
-  }
-
-  # install nginx and serve a simple web page
-  metadata = {
-    startup-script = <<-EOF1
-      #! /bin/bash
-      set -euo pipefail
-
-      export DEBIAN_FRONTEND=noninteractive
-      apt-get update
-      apt-get install -y nginx-light jq
-
-      cat <<EOF > /var/www/html/index.html
-      <pre>
-      NGINX is working like a charm :)
-      </pre>
-      EOF
-    EOF1
-  }
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "google_compute_region_health_check" "default" {
-  name   = "l4-ilb-hc"
-  region = var.region
-  http_health_check {
-    port = "80"
-  }
-}
-
-resource "google_compute_region_instance_group_manager" "mig" {
-  name   = "l4-ilb-mig1"
-  region = var.region
-  version {
-    instance_template = google_compute_instance_template.instance_template.id
-    name              = "primary"
-  }
-  base_instance_name = "vm"
-  target_size        = 2
-}
-
-# allow all access from health check ranges
-resource "google_compute_firewall" "fw_hc" {
-  name          = "l4-ilb-fw-allow-hc"
-  direction     = "INGRESS"
-  network       = google_compute_network.vpc_node01.id
-  source_ranges = ["130.211.0.0/22", "35.191.0.0/16", "35.235.240.0/20"]
-  allow {
-    protocol = "tcp"
-  }
-  target_tags = ["allow-health-check"]
-}
