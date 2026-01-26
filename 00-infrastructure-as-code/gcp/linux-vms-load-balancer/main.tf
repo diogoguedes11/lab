@@ -130,22 +130,22 @@ resource "google_compute_firewall" "allow_icmp_node02" {
   source_ranges = ["0.0.0.0/0"]
 }
 
-resource "google_compute_firewall" "allow_internal_node02" {
-  name    = "allow-internal-node02"
-  network = google_compute_network.vpc_node02.self_link
+# resource "google_compute_firewall" "allow_internal_node02" {
+#   name    = "allow-internal-node02"
+#   network = google_compute_network.vpc_node02.self_link
 
-  allow {
-    protocol = "tcp"
-    ports    = ["0-65535"]
-  }
+#   allow {
+#     protocol = "tcp"
+#     ports    = ["0-65535"]
+#   }
 
-  allow {
-    protocol = "udp"
-    ports    = ["0-65535"]
-  }
+#   allow {
+#     protocol = "udp"
+#     ports    = ["0-65535"]
+#   }
 
-  source_ranges = ["0.0.0.0/0"]
-}
+#   source_ranges = ["0.0.0.0/0"]
+# }
 
 resource "google_compute_instance" "linux_vm_node02" {
   name         = "linux-vm-node02"
@@ -167,11 +167,33 @@ resource "google_compute_instance" "linux_vm_node02" {
   }
   depends_on = [google_compute_subnetwork.subnet_node02]
 }
+# Cloud armor
 
+resource "google_compute_region_security_policy" "armor_internal" {
+  name     = "armor-policy-internal"
+  provider = google-beta
+  region   = var.region
+  project  = var.project_id
+  type     = "CLOUD_ARMOR"
+
+}
+
+resource "google_compute_region_security_policy_rule" "deny_node01" {
+  provider        = google-beta
+  project         = var.project_id
+  region          = var.region
+  security_policy = google_compute_region_security_policy.armor_internal.name
+  priority        = 1000
+  match {
+    versioned_expr = "SRC_IPS_V1"
+    config {
+      src_ip_ranges = ["10.0.0.0/24"] # Range da subnet-node01
+    }
+  }
+  action = "deny(80)"
+}
 
 # LOAD BALANCER
-
-
 
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   name                  = "l4-ilb-forwarding-rule"
@@ -181,30 +203,33 @@ resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   load_balancing_scheme = "INTERNAL"
   all_ports             = true
   allow_global_access   = true
-  network               = google_compute_network.vpc_node01.id
-  subnetwork            = google_compute_subnetwork.subnet_node01.id
+  network               = google_compute_network.vpc_node02.id
+  subnetwork            = google_compute_subnetwork.subnet_node02.id
 }
-
 resource "google_compute_region_backend_service" "default" {
   name                  = "l4-ilb-backend-subnet"
+  provider              = google-beta
+  project               = var.project_id
   region                = var.region
   protocol              = "TCP"
-  load_balancing_scheme = "INTERNAL"
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  security_policy       = google_compute_region_security_policy.armor_internal.self_link
   health_checks         = [google_compute_region_health_check.default.id]
   backend {
+
     group          = google_compute_region_instance_group_manager.mig.instance_group
-    balancing_mode = "CONNECTION"
+    balancing_mode = "UTILIZATION"
   }
 }
 
 resource "google_compute_instance_template" "instance_template" {
   name         = "l4-ilb-mig-template"
   machine_type = "e2-small"
-  tags         = ["allow-ssh", "allow-health-check"]
+  tags         = ["allow-ssh", "allow-health-check", "allow-http"]
 
   network_interface {
-    network    = google_compute_network.vpc_node01.id
-    subnetwork = google_compute_subnetwork.subnet_node01.id
+    network    = google_compute_network.vpc_node02.id
+    subnetwork = google_compute_subnetwork.subnet_node02.id
     # access_config {
     #   # add external ip to fetch packages
     # }
@@ -237,6 +262,18 @@ resource "google_compute_instance_template" "instance_template" {
   }
 }
 
+resource "google_compute_firewall" "fw_http" {
+
+  name    = "fw-allow-http"
+  network = google_compute_network.vpc_node02.id
+  allow {
+    ports    = ["80"]
+    protocol = "TCP"
+  }
+  source_ranges = ["10.0.1.0/24"]
+  target_tags   = ["allow-http"]
+}
+
 resource "google_compute_region_health_check" "default" {
   name   = "l4-ilb-hc"
   region = var.region
@@ -260,10 +297,24 @@ resource "google_compute_region_instance_group_manager" "mig" {
 resource "google_compute_firewall" "fw_hc" {
   name          = "l4-ilb-fw-allow-hc"
   direction     = "INGRESS"
-  network       = google_compute_network.vpc_node01.id
+  network       = google_compute_network.vpc_node02.id
   source_ranges = ["130.211.0.0/22", "35.191.0.0/16", "35.235.240.0/20"]
   allow {
     protocol = "tcp"
   }
   target_tags = ["allow-health-check"]
+}
+
+# Cloud nat
+resource "google_compute_router" "router" {
+  name    = "nat-router"
+  network = google_compute_network.vpc_node02.id
+  region  = var.region
+}
+module "cloud_nat" {
+  source     = "terraform-google-modules/cloud-nat/google"
+  version    = "~> 5.0"
+  project_id = var.project_id
+  region     = var.region
+  router     = google_compute_router.router.name
 }
