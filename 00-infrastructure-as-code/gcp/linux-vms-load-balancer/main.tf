@@ -187,7 +187,7 @@ resource "google_compute_region_security_policy_rule" "deny_node01" {
   match {
     versioned_expr = "SRC_IPS_V1"
     config {
-      src_ip_ranges = ["10.0.0.0/24"] # Range da subnet-node01
+      src_ip_ranges = ["10.0.1.0/24"] # Range da subnet-node02
     }
   }
   action = "deny"
@@ -320,6 +320,18 @@ resource "google_compute_region_instance_group_manager" "mig" {
   target_size        = 1
 }
 
+# allow access from the VMs to the proxy subnet
+resource "google_compute_firewall" "allow_proxy_to_vms" {
+  name          = "allow-proxy-only-subnet-to-vms"
+  network       = google_compute_network.vpc_node02.id
+  source_ranges = ["10.129.0.0/23"]
+  target_tags   = ["allow-http"]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80"]
+  }
+}
 # allow all access from health check ranges
 resource "google_compute_firewall" "fw_hc" {
   name          = "l4-ilb-fw-allow-hc"
