@@ -234,6 +234,7 @@ resource "google_compute_region_backend_service" "default" {
   protocol              = "HTTP"
   load_balancing_scheme = "INTERNAL_MANAGED"
   security_policy       = google_compute_region_security_policy.armor_internal.self_link
+  port_name             = "http"
   backend {
     group           = google_compute_region_instance_group_manager.mig.instance_group
     balancing_mode  = "UTILIZATION"
@@ -310,6 +311,10 @@ resource "google_compute_region_instance_group_manager" "mig" {
   version {
     instance_template = google_compute_instance_template.instance_template.id
     name              = "primary"
+  }
+  named_port {
+    name = "http"
+    port = 80
   }
   base_instance_name = "vm"
   target_size        = 1
