@@ -190,36 +190,58 @@ resource "google_compute_region_security_policy_rule" "deny_node01" {
       src_ip_ranges = ["10.0.0.0/24"] # Range da subnet-node01
     }
   }
-  action = "deny(80)"
+  action = "deny"
 }
 
 # LOAD BALANCER
 
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
   name                  = "l4-ilb-forwarding-rule"
-  backend_service       = google_compute_region_backend_service.default.id
   region                = var.region
   ip_protocol           = "TCP"
-  load_balancing_scheme = "INTERNAL"
-  all_ports             = true
+  load_balancing_scheme = "INTERNAL_MANAGED"
+  port_range            = "80"
   allow_global_access   = true
   network               = google_compute_network.vpc_node02.id
   subnetwork            = google_compute_subnetwork.subnet_node02.id
+
+  target = google_compute_region_target_http_proxy.default.id
+}
+resource "google_compute_region_url_map" "default" {
+  name            = "l7-ilb-url-map"
+  region          = var.region
+  default_service = google_compute_region_backend_service.default.id
+}
+resource "google_compute_subnetwork" "proxy_only_subnet" {
+  name          = "proxy-only-subnet"
+  ip_cidr_range = "10.129.0.0/23"
+  network       = google_compute_network.vpc_node02.id
+  region        = var.region
+  purpose       = "REGIONAL_MANAGED_PROXY"
+  role          = "ACTIVE"
+}
+
+resource "google_compute_region_target_http_proxy" "default" {
+  name    = "l7-ilb-target-proxy"
+  region  = var.region
+  url_map = google_compute_region_url_map.default.id
 }
 resource "google_compute_region_backend_service" "default" {
   name                  = "l4-ilb-backend-subnet"
   provider              = google-beta
   project               = var.project_id
   region                = var.region
-  protocol              = "TCP"
+  protocol              = "HTTP"
   load_balancing_scheme = "INTERNAL_MANAGED"
   security_policy       = google_compute_region_security_policy.armor_internal.self_link
-  health_checks         = [google_compute_region_health_check.default.id]
   backend {
-
-    group          = google_compute_region_instance_group_manager.mig.instance_group
-    balancing_mode = "UTILIZATION"
+    group           = google_compute_region_instance_group_manager.mig.instance_group
+    balancing_mode  = "UTILIZATION"
+    max_utilization = 0.8
+    capacity_scaler = 1.0
   }
+
+  health_checks = [google_compute_region_health_check.default.id]
 }
 
 resource "google_compute_instance_template" "instance_template" {
