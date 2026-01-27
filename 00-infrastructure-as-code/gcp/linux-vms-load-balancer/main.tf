@@ -190,13 +190,13 @@ resource "google_compute_region_security_policy_rule" "deny_node01" {
       src_ip_ranges = ["10.0.1.0/24"] # Range da subnet-node02
     }
   }
-  action = "deny"
+  action = "deny(403)"
 }
 
 # LOAD BALANCER
 
 resource "google_compute_forwarding_rule" "google_compute_forwarding_rule" {
-  name                  = "l4-ilb-forwarding-rule"
+  name                  = "l7-ilb-forwarding-rule"
   region                = var.region
   ip_protocol           = "TCP"
   load_balancing_scheme = "INTERNAL_MANAGED"
