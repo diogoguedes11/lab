@@ -11,6 +11,7 @@
 
 ## 🚀 Próximos Desafios
 
+- **Secure web proxy** - Testar vms trafego egress
 - **Cloud CDN:** Criar um Bucket e proteger com Armor.
 - **IAP:** Testar o Identity-Aware Proxy.
 - **PSC:** Criar um PSC noutra rede e ligar ao LB
