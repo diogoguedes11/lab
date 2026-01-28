@@ -7,10 +7,11 @@
 
 ## 🏗️ Em Progresso
 
-- **Cloud CDN:** Criar um Bucket e proteger com Armor.
+- **PSC:** Criar um PSC noutra rede e ligar ao LB
 
 ## 🚀 Próximos Desafios
 
+- **Cloud CDN:** Criar um Bucket e proteger com Armor.
 - **Secure web proxy** - Testar vms trafego egress
 - **Cloud CDN:** Criar um Bucket e proteger com Armor.
 - **IAP:** Testar o Identity-Aware Proxy.
