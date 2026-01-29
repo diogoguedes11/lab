@@ -5,3 +5,4 @@ langchain
 langchain-text-splitters
 langchain-community
 langchain-core
+langchain-classic

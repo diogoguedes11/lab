@@ -3,6 +3,11 @@ import whisper
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_community.document_loaders.text import TextLoader
+from langchain_community.llms.ollama import Ollama
+from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.prompts import ChatPromptTemplate
+
+
 
 URL= 'https://www.youtube.com/watch?v=Y-pEoGvuWKk'
 FILE_NAME="audio.mp3"
@@ -34,17 +39,20 @@ def get_transcript():
     print("\n--- DONE! ---")
 
 def summarize(document):
-    #llm = Ollama(model="llama3")
+    llm = Ollama(model="llama3")
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
     loader_docs = TextLoader(file_path=document, encoding='utf-8').load()
     docs = text_splitter.split_documents(loader_docs)
-    print(docs)
-
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", ":Summary the text\n\n {context}")
+    ])
     # map reduce for long texts
-    # chain = load_summarize_chain(llm, chain_type="map_reduce")
+    print("--- Summary---")
+    chain = create_stuff_documents_chain(llm=llm, prompt=prompt)
+    print(chain.run(docs))
+    result = chain.invoke({"context": docs})
+    print(result)
 
-    # print("--- Summary---")
-    # summary = chain.run(docs)
 
 def main():
     get_transcript()
