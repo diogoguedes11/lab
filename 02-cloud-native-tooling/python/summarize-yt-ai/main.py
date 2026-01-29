@@ -49,7 +49,6 @@ def summarize(document):
     # map reduce for long texts
     print("--- Summary---")
     chain = create_stuff_documents_chain(llm=llm, prompt=prompt)
-    print(chain.run(docs))
     result = chain.invoke({"context": docs})
     print(result)
 
