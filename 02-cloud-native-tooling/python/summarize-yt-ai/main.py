@@ -1,7 +1,8 @@
 from yt_dlp import YoutubeDL
 import whisper 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+from langchain_core.documents import Document
+from langchain_community.document_loaders.text import TextLoader
 
 URL= 'https://www.youtube.com/watch?v=Y-pEoGvuWKk'
 FILE_NAME="audio.mp3"
@@ -33,10 +34,17 @@ def get_transcript():
     print("\n--- DONE! ---")
 
 def summarize(document):
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=100, chunk_overlap=0)
-    texts = text_splitter.split_text(document)
-    print(texts)
+    #llm = Ollama(model="llama3")
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=200)
+    loader_docs = TextLoader(file_path=document, encoding='utf-8').load()
+    docs = text_splitter.split_documents(loader_docs)
+    print(docs)
 
+    # map reduce for long texts
+    # chain = load_summarize_chain(llm, chain_type="map_reduce")
+
+    # print("--- Summary---")
+    # summary = chain.run(docs)
 
 def main():
     get_transcript()
