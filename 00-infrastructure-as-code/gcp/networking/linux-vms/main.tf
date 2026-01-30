@@ -33,7 +33,7 @@ resource "google_compute_instance" "linux_vm_node01" {
     systemctl restart frr
   EOT
   network_interface {
-    access_config {}
+    # access_config {}
     network    = google_compute_network.vpc_node01.name
     subnetwork = google_compute_subnetwork.subnet_node01.name
   }
@@ -88,6 +88,9 @@ resource "google_compute_firewall" "allow_internal_node01" {
   }
   source_ranges = ["10.0.0.0/24", "10.0.1.0/24", "10.0.2.0/24"]
 }
+
+
+
 
 # # VM 2
 # resource "google_compute_instance" "linux_vm_node02" {
