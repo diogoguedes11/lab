@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 
 
-URL= 'https://www.youtube.com/watch?v=Y-pEoGvuWKk'
+URL= 'https://www.youtube.com/watch?v=x1t2GPChhX8&t=969s'
 FILE_NAME="audio.mp3"
 TRANSCRIPT_FILE="transcription.txt"
 
@@ -44,7 +44,7 @@ def summarize(document):
     loader_docs = TextLoader(file_path=document, encoding='utf-8').load()
     docs = text_splitter.split_documents(loader_docs)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", ":Summary the text\n\n {context}")
+        ("system", ":Summary in bullet points on the following:\n\n {context}")
     ])
     # map reduce for long texts
     print("--- Summary---")
