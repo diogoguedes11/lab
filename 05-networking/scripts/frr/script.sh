@@ -31,3 +31,5 @@ cp /etc/frr/daemons /etc/frr/r2/daemons
 
 cp /etc/frr/frr.conf /etc/frr/r1/frr.conf
 cp /etc/frr/frr.conf /etc/frr/r2/frr.conf
+
+echo "Done."
