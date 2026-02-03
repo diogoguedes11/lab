@@ -1,8 +1,6 @@
-Markdown
+# Engineering Lab
 
-# Cloud Engineering Playground ☁️
-
-A comprehensive lab containing Infrastructure as Code, Kubernetes patterns, and Cloud Native tooling.
+A comprehensive lab containing Infrastructure as Code, Kubernetes patterns, Cloud Native tooling and others.
 This repository serves as a collection of reference implementations and experimental architectures.
 
 ## 📂 Structure
