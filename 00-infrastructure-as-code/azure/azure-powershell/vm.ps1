@@ -3,7 +3,7 @@
 $virtualNetworkName = "vnet-workloads"
 $resourceGroupName = "rg"
 $username = "guedes"
-$plainPassword = "root@1234"
+#$plainPassword = ""
 $virtualMachineName = "workload-a-vm"
 $location = "eastus"
 $subnetName = "snet-workload-a"
@@ -32,10 +32,10 @@ Write-Host "Creating Virtual machine: $virtualMachineName" -ForegroundColor "Yel
 
 
 New-AzVm `
-      -ResourceGroupName $resourceGroupName `
-      -Location $location -VirtualNetworkName `
-      $virtualNetworkName `
-      -SubnetName $subnetName `
-      -PublicIpAddressName "$virtualMachineName-pip" -Name $virtualMachineName `
-      -Credential $credential -Image "Ubuntu2204" -Size "Standard_D2s_v3"
+   -ResourceGroupName $resourceGroupName `
+   -Location $location -VirtualNetworkName `
+   $virtualNetworkName `
+   -SubnetName $subnetName `
+   -PublicIpAddressName "$virtualMachineName-pip" -Name $virtualMachineName `
+   -Credential $credential -Image "Ubuntu2204" -Size "Standard_D2s_v3"
 

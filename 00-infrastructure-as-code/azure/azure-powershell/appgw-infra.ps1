@@ -6,7 +6,7 @@ $ErrorActionPreference = 'Stop'
 $rg = "rg-appgw"
 $region = "eastus"
 $username = "azureuser" #username for the VM
-$plainPassword = "P4ssw0rd11!" #your VM password
+#$plainPassword = ""
 
 #Creating VM credential; use your own password and username by changing the variables if needed
 $password = ConvertTo-SecureString $plainPassword -AsPlainText -Force
@@ -25,7 +25,7 @@ $help = New-AzVirtualNetworkSubnetConfig -Name "snet-appgw-help" -AddressPrefix 
 # Creating the VNet with the subnets
 $vnet = Get-AzVirtualNetwork -ResourceGroupName $rg -Name $vnetName -ErrorAction SilentlyContinue
 if (-not $vnet) {
-    New-AzVirtualNetwork -ResourceGroupName $rg -Location $region -Name $vnetName -AddressPrefix "10.0.0.0/16" -Subnet $contacts, $help
+   New-AzVirtualNetwork -ResourceGroupName $rg -Location $region -Name $vnetName -AddressPrefix "10.0.0.0/16" -Subnet $contacts, $help
 }
 
 # Create virtual machines in each subnet
