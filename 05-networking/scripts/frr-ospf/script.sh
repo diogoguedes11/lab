@@ -21,7 +21,6 @@ ip netns exec r1 ip link set veth-r1 up
 ip netns exec r2 ip addr add 192.255.255.2/24 dev veth-r2
 ip netns exec r2 ip link set veth-r2 up
 
-
 echo "Creating folders for each namespace individually..."
 
 mkdir -p /etc/frr/{r1,r2}
