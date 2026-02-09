@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -8,7 +9,7 @@ import (
 )
 
 const (
-	envSubID = "AZURE_SUBSCRIPTION_ID"
+	envSubID = "SUBSCRIPTION_ID"
 )
 
 func getToken() (*azidentity.DefaultAzureCredential, string) {
@@ -26,5 +27,6 @@ func getToken() (*azidentity.DefaultAzureCredential, string) {
 }
 
 func main() {
-	getToken()
+	cred, subID := getToken()
+	fmt.Println(cred, subID)
 }
