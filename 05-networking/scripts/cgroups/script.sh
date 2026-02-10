@@ -27,4 +27,4 @@ configure_cgroup(){
 
 
 create_namespace
-configure_cgroup
+configure_cgroup cg1
