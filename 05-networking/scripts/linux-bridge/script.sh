@@ -38,7 +38,7 @@ create_end_host(){
         ip link exec ${bridge_nsname} ip link set ${bridge_peer_ifname} up
 
         # Add address space
-        ip link exec ${host_nsname} exec ip adr add ${host_ip} dev ${host_ifname}
+        ip link exec ${host_nsname}  ip adr add ${host_ip} dev ${host_ifname}
 
         # Attach  host interface to the bridge
         ip netns exec ${host_nsname} ip link set ${bridge_peer_ifname} master ${bridge_ifname}
