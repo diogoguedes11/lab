@@ -1,13 +1,24 @@
 #!/bin/bash
 
-unshare --fork --pid --mount-proc bash
 
-mkdir /sys/fs/cgroup/cpu/cg1
+create_namespace(){
+    echo "Creating linux namespace..." 
+    unshare --fork --pid --mount-proc bash
 
-echo $$ > /sys/fs/cgroup/cpu/cg1/cgroup.procs  # Automatically puts new processes in the cgroup (fork() will create a new process)
+}
+configure_cgroup(){
 
-echo "+cpu +memory -io" > /sys/fs/cgroup/<parent>/cgroup.subtree_control
+    local cgroup_name="$1"
+    local memory_max="100M"
+    local cpu_max="50000 100000"
+    mkdir /sys/fs/cgroup/cpu/${cgroup_name}
+    echo "+cpu +memory -io" > /sys/fs/cgroup/${cgroup_name}/cgroup.subtree_control
+    echo $$ > /sys/fs/cgroup/cpu/${cgroup_name}/cgroup.procs  # Automatically puts new processes in the cgroup (fork() will create a new process)
+    echo "+cpu +memory -io" > /sys/fs/cgroup/<${cgroup_name}/cgroup.subtree_control
+    echo ${cpu_max} > /sys/fs/cgroup/${cgroup_name}/cpu.max
+    echo ${memory_max} > /sys/fs/cgroup/${cgroup_name}/memory.max
+}
 
-echo "50000 100000" > /sys/fs/cgroup/cg1/cpu.max
 
-echo "100M" > /sys/fs/cgroup/cg1/memory.max
+create_namespace
+configure_cgroup
