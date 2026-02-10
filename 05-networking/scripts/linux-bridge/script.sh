@@ -46,5 +46,9 @@ create_end_host(){
 
 
 
-create_bridge
-create_end_host
+create_bridge bridge1 br1
+create_end_host host1 eth0 bridge1 br1 veth-h1 192.168.1.10/24
+create_end_host host2 eth0 bridge1 br1 veth-h2 192.168.1.11/24
+
+echo "--- Testing Connectivity..."
+ip netns exec host1 ping -c 2 192.168.11
