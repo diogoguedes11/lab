@@ -9,15 +9,41 @@ fi
 echo "cleaning old namespaces..."
 ip -all netns delete 2>/dev/null
 
+
 create_bridge(){
   local nsname="$1"
   local ifname="$2"
+  local gateway_ip="192.168.1.1/24"
+  local bridge_root_address="10.0.0.2/24"
+  local root_bridge_address="10.0.0.1/24"
+  local bridge_root_int="v-bridge-root"
+  local root_bridge_int="v-root-bridge"
+
+  echo "cleaning existing interfaces..."
+
+  ip link delete ${root_bridge_int}
 
   echo "creating bridge ${nsname}/${ifname}"
   ip netns add ${nsname}
   ip netns exec ${nsname} ip link set lo up
   ip netns exec ${nsname} ip link add ${ifname} type bridge
+  ip netns exec ${nsname} ip addr add ${gateway_ip} dev br1
   ip netns exec ${nsname} ip link set ${ifname} up
+
+  # Routing to internet via host machine (bridge  is inside a namespace)
+  ip link add ${root_bridge_int} type veth peer name ${bridge_root_int} netns ${nsname}
+  ip netns exec ${nsname} ip addr add ${bridge_root_address} dev ${bridge_root_int} 
+  ip netns exec ${nsname} ip link set ${bridge_root_int} up
+  
+  ip addr add ${root_bridge_address} dev ${root_bridge_int}
+  ip link set ${root_bridge_int} up
+
+  # IP forwarding and nat masquerading
+  ip netns exec ${nsname} ip route add default via 10.0.0.1
+  sysctl -w net.ipv4.ip_forward=1 > /dev/null
+  ip netns exec ${nsname} sysctl -w net.ipv4.ip_forward=1 > /dev/null
+  iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o enp0s3 -j MASQUERADE
+  iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o enp0s3 -j MASQUERADE
 }
 
 create_end_host(){
@@ -27,6 +53,7 @@ create_end_host(){
     local bridge_ifname="$4"
     local bridge_peer_ifname="$5"
     local host_ip="$6"
+    local bridge_ip="192.168.1.1"
 
     echo "--- Connecting ${host_nsname} to Bridge ${bridge_ifname} ---"
     
@@ -46,13 +73,15 @@ create_end_host(){
 
     #  Attach bridge-side interface to the bridge
     ip netns exec ${bridge_nsname} ip link set ${bridge_peer_ifname} master ${bridge_ifname}
+
+    ip netns exec ${host_nsname} ip route add default via ${bridge_ip}
 }
 
 
 create_bridge bridge1 br1
 
-create_end_host host1 eth0 bridge1 br1 v-h1 192.168.1.10/24
-create_end_host host2 eth0 bridge1 br1 v-h2 192.168.1.11/24
+create_end_host host1 eth1 bridge1 br1 v-h1 192.168.1.10/24
+create_end_host host2 eth2 bridge1 br1 v-h2 192.168.1.11/24
 
 echo "--- Testing Connectivity (Host1 -> Host2)..."
 ip netns exec host1 ping -c 2 192.168.1.11
