@@ -8,12 +8,15 @@ fi
 
 echo "cleaning old namespaces..."
 ip -all netns delete 2>/dev/null
+iptables -P FORWARD ACCEPT
+sysctl -w net.bridge.bridge-nf-call-iptables=0 > /dev/null 2>&1
+
 
 
 create_bridge(){
   local nsname="$1"
   local ifname="$2"
-  local gateway_ip="192.168.1.1/24"
+  local gateway_ip="172.16.0.1/24"
   local bridge_root_address="10.0.0.2/24"
   local root_bridge_address="10.0.0.1/24"
   local bridge_root_int="v-bridge-root"
@@ -43,7 +46,10 @@ create_bridge(){
   sysctl -w net.ipv4.ip_forward=1 > /dev/null
   ip netns exec ${nsname} sysctl -w net.ipv4.ip_forward=1 > /dev/null
   iptables -t nat -A POSTROUTING -s 10.0.0.0/24 -o enp0s3 -j MASQUERADE
-  iptables -t nat -A POSTROUTING -s 192.168.1.0/24 -o enp0s3 -j MASQUERADE
+  iptables -t nat -A POSTROUTING -s 172.16.0.0/24 -o enp0s3 -j MASQUERADE
+
+  # host
+  ip route add 172.16.0.0/24 via 10.0.0.2
 }
 
 create_end_host(){
@@ -53,7 +59,7 @@ create_end_host(){
     local bridge_ifname="$4"
     local bridge_peer_ifname="$5"
     local host_ip="$6"
-    local bridge_ip="192.168.1.1"
+    local bridge_ip="172.16.0.1"
 
     echo "--- Connecting ${host_nsname} to Bridge ${bridge_ifname} ---"
     
@@ -74,14 +80,15 @@ create_end_host(){
     #  Attach bridge-side interface to the bridge
     ip netns exec ${bridge_nsname} ip link set ${bridge_peer_ifname} master ${bridge_ifname}
 
-    ip netns exec ${host_nsname} ip route add default via ${bridge_ip}
+    ip netns exec ${host_nsname} ip route add default via ${bridge_ip} 
+    
 }
 
 
 create_bridge bridge1 br1
 
-create_end_host host1 eth1 bridge1 br1 v-h1 192.168.1.10/24
-create_end_host host2 eth2 bridge1 br1 v-h2 192.168.1.11/24
+create_end_host host1 eth1 bridge1 br1 v-h1 172.16.0.10/24
+create_end_host host2 eth2 bridge1 br1 v-h2 172.16.0.11/24
 
 echo "--- Testing Connectivity (Host1 -> Host2)..."
-ip netns exec host1 ping -c 2 192.168.1.11
+ip netns exec host1 ping -c 2 172.16.0.11
