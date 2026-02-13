@@ -26,8 +26,7 @@ create_bridge(){
 
   ip link delete ${root_bridge_int}
 
-  echo "creating bridge ${nsname}/${ifname}"
-  ip netns add ${nsname}
+  echo "creating bridge ${nsname}/${ifname}" ip netns add ${nsname}
   ip netns exec ${nsname} ip link set lo up
   ip netns exec ${nsname} ip link add ${ifname} type bridge
   ip netns exec ${nsname} ip addr add ${gateway_ip} dev ${ifname}
