@@ -84,11 +84,34 @@ create_end_host(){
     
 }
 
+connect_bridges(){
+    local bridge1_ns="$1"
+    local bridge1_if="$2"
+    local bridge2_ns="$3"
+    local bridge2_if="$4"
+    local peer1_if="v-peer1"
+    local peer2_if="v-peer2"
+    
+    echo "--- Connecting ${bridge1_ns} to ${bridge2_ns} ---"
+    
+    # Create Veth Pair
+    ip link add ${peer1_if} netns ${bridge1_ns} type veth peer name ${peer2_if} netns ${bridge2_ns}
+    
+    # Set interfaces up
+    ip netns exec ${bridge1_ns} ip link set ${peer1_if} up
+    ip netns exec ${bridge2_ns} ip link set ${peer2_if} up
+    
+    # Attach bridge-side interfaces to the respective bridges
+    ip netns exec ${bridge1_ns} ip link set ${peer1_if} master ${bridge1_if}
+    ip netns exec ${bridge2_ns} ip link set ${peer2_if} master ${bridge2_if}
+
+}
 
 create_bridge bridge1 br1
 
 create_end_host host1 eth1 bridge1 br1 v-h1 172.16.0.10/24
 create_end_host host2 eth2 bridge1 br1 v-h2 172.16.0.11/24
+connect_bridges bridge1 br1 bridge2 br2
 
 echo "--- Testing Connectivity (Host1 -> Host2)..."
 ip netns exec host1 ping -c 2 172.16.0.11
