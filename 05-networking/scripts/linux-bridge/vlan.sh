@@ -38,6 +38,7 @@ create_end_host(){
     ip netns exec ${bridge_nsname} ip link set ${bridge_peer_ifname} master ${bridge_ifname}
 
     ip netns exec ${bridge_nsname} bridge vlan del dev ${bridge_peer_ifname} vid 1
+    ip netns exec ${bridge_nsname} bridge vlan add dev ${bridge_peer_ifname} vid ${vlan_id}
 }
 
 create_bridge bridge1 br1
